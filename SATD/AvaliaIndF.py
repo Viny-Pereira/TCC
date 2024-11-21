@@ -90,7 +90,6 @@ class StructuralEvaluation:
 
     def __init__(
         self,
-        subpop,
         numpav,
         dminx,
         dminy,
@@ -116,8 +115,6 @@ class StructuralEvaluation:
 
         Parâmetros:
         -----------
-        subpop : np.ndarray
-            Matriz representando a população inicial de indivíduos.
         numpav : int
             Número total de pavimentos do edifício.
         dminx : float
@@ -157,7 +154,6 @@ class StructuralEvaluation:
         numgen : int
             Número de gerações para as simulações.
         """
-        self.subpop = subpop
         self.numpav = numpav
         self.dminx = dminx
         self.dminy = dminy
@@ -200,17 +196,38 @@ class StructuralEvaluation:
 
         # Inicializa as propriedades
         self.initialize_properties()
-        self.decode()
-        self.LLJ, self.LLV, self.LLJC = self.calculate_spans()
-        self.hollow_slab()
-        self.inverted_t_beam()
-        self.custo_estrutura()
 
     def initialize_properties(self):
         self.initialize_material_properties()
         self.initialize_panel_properties()
         self.initialize_beam_properties()
         self.initialize_prestressing_forces()
+
+    def initialize_individual(self, subpop):
+        """
+        Initializes an individual with a given subpopulation, decodes its genetic representation,
+        calculates spans, and evaluates structural components and costs.
+
+        This method performs the following steps for the given individual:
+        1. Decodes the genetic representation of the subpopulation.
+        2. Calculates the longitudinal and vertical spans.
+        3. Evaluates the hollow slab design.
+        4. Computes the properties of inverted T-beams.
+        5. Calculates the structural cost.
+
+        Args:
+            subpop (np.ndarray): A binary array representing the genetic representation of the individual.
+                                Each gene encodes a design parameter.
+
+        Returns:
+            None. Updates the instance attributes based on the evaluated individual.
+        """
+        self.subpop = subpop
+        self.decode()
+        self.LLJ, self.LLV, self.LLJC = self.calculate_spans()
+        self.hollow_slab()
+        self.inverted_t_beam()
+        self.custo_estrutura()
 
     def initialize_material_properties(self):
         """
@@ -540,7 +557,6 @@ class StructuralEvaluation:
         As funções auxiliares `calculate_nx`, `calculate_ny`, e `calculate_vv` são chamadas
         para determinar valores específicos.
         """
-
         self.DL = self.subpop[0]  # Já é o próprio valor
 
         self.PM = int(2 * self.subpop[1] + self.subpop[2])  # Auxiliar
@@ -1748,14 +1764,15 @@ class StructuralEvaluation:
                 - QDP (int): The number of columns per floor.
         """
         # Calculate number of beams per floor
-        QDV = int(self.NX * (self.NY + 1) * self.DL + self.NY * (self.NX + 1) * (
-            1 - self.DL
-        ))
+        QDV = int(
+            self.NX * (self.NY + 1) * self.DL + self.NY * (self.NX + 1) * (1 - self.DL)
+        )
 
         # Calculate number of slabs per floor
-        QDL = int(((self.NX) * self.LLV / 1.2) * self.NY * self.DL + (
-            (self.NY) * self.LLV / 1.2
-        ) * self.NX * (1 - self.DL))
+        QDL = int(
+            ((self.NX) * self.LLV / 1.2) * self.NY * self.DL
+            + ((self.NY) * self.LLV / 1.2) * self.NX * (1 - self.DL)
+        )
 
         # Calculate number of columns per floor
         QDP = int((self.NX + 1) * (self.NY + 1))
@@ -1996,7 +2013,6 @@ class StructuralEvaluation:
         """
         # Custo do aço de protensão
         CUSTOPROT = (
-
             (1.085 * self.VAPV * 7810.65 * self.QDV + self.VAPL * 7857 * self.QDL)
             * self.cap
             * self.numpav
@@ -2097,7 +2113,7 @@ class StructuralEvaluation:
         """
         Exibe os resultados do cálculo estrutural.
         Se um arquivo for fornecido, grava os resultados no arquivo.
-        
+
         :param arquivo: Instância de ArquivoSaida para gravação (opcional).
         """
         self.calcular_vtc()
@@ -2130,13 +2146,17 @@ class StructuralEvaluation:
         resultados.append(f"Custo Transporte= {self.CTT:.2f}")
         resultados.append(f"Custo Montagem= {self.CTMT:.2f}")
         resultados.append(f"Custo Desp Operacional= {self.CDOP:.2f}")
-        resultados.append(f"Custo %Fabricacao= {(self.CUSTOFAB / self.CUSTOEST) * 100:.2f}%")
+        resultados.append(
+            f"Custo %Fabricacao= {(self.CUSTOFAB / self.CUSTOEST) * 100:.2f}%"
+        )
         resultados.append(f"Custo %Transporte= {(self.CTT / self.CUSTOEST) * 100:.2f}%")
         resultados.append(f"Custo %Montagem= {(self.CTMT / self.CUSTOEST) * 100:.2f}%")
         resultados.append(f"Custo Total= {self.CUSTOTAL:.2f}")
         resultados.append(f"Pentotal= {self.PENTOTAL:.2f}")
         resultados.append(f"Apt= {self.F:.2f}")
-        resultados.append(f"Custo Estrutura/m2= {(self.CUSTOEST * 1.33) / (self.LX * self.LY * self.numpav):.2f}")
+        resultados.append(
+            f"Custo Estrutura/m2= {(self.CUSTOEST * 1.33) / (self.LX * self.LY * self.numpav):.2f}"
+        )
 
         # Dados da laje
         resultados.append("--- DADOS DA LAJE INDIVÍDUO ---")
@@ -2192,7 +2212,6 @@ def main():
 
     # Instanciando a classe
     evaluation = StructuralEvaluation(
-        subpop=subpop[0],
         numpav=numpav,
         dminx=dminx,
         dminy=dminy,
@@ -2213,9 +2232,10 @@ def main():
         nvv=nvv,
         numgen=numgen,
     )
+    evaluation.initialize_individual(subpop[0])
 
     aptidao = evaluation.get_fitness()
-    #print(evaluation.mostrar_resultados())
+    # print(evaluation.mostrar_resultados())
 
     # Exibindo os resultados
     print(f"Aptidao: {aptidao}")

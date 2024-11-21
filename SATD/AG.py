@@ -83,11 +83,9 @@ class GeneticAlgorithm:
         """
         self.fitness = np.zeros(self.num_individuals)
 
+        evaluation = StructuralEvaluation(**self.structural_params)
         for i, individual in enumerate(self.population):
-
-            evaluation = StructuralEvaluation(
-                subpop=individual, **self.structural_params
-            )
+            evaluation.initialize_individual(individual)
             self.fitness[i] = evaluation.get_fitness()
             print(evaluation.mostrar_resultados())
 
@@ -195,7 +193,7 @@ class GeneticAlgorithm:
         best_index = np.argmax(self.fitness)
         return self.population[best_index], self.fitness[best_index]
 
- 
+
 def main():
     print("Bem-vindo ao sistema de cálculo de parâmetros de design de edifícios!")
 
