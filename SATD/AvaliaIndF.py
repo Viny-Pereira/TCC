@@ -5,38 +5,92 @@ class StructuralEvaluation:
     """
     Classe para realizar a avaliação estrutural de indivíduos em uma população.
 
+    Esta classe calcula parâmetros estruturais, como aptidão, propriedades de lajes
+    e vigas, baseando-se em uma população inicial de indivíduos e diversas restrições
+    e propriedades fornecidas.
+
     Atributos:
-    -----------
+    ----------
     subpop : np.ndarray
-        Matriz com as informações dos indivíduos da população.
-    subapt : np.ndarray
-        Valores de aptidão dos indivíduos.
-    numpav : int
-        Número de pavimentos.
-    dminx, dminy : float
-        Distâncias mínimas em x e y.
-    lx, ly : float
-        Comprimento em x e y.
-    hmax, bmax : float
-        Altura e largura máximas.
-    q, gpr, gpl, ccml, cpm, cap, cad : float
-        Parâmetros diversos.
-    numind : int
-        Número de indivíduos.
-    nxmax, nymax : int
-        Máximos valores para nx e ny.
-    nvv : int
-        Parâmetro adicional.
-    numgen : int
-        Número de gerações.
+        Matriz contendo as informações dos indivíduos da população.
     fitness : np.ndarray
-        Array que armazena os valores de aptidão dos indivíduos.
+        Array para armazenar os valores de aptidão de cada indivíduo.
+    numpav : int
+        Número de pavimentos do edifício.
+    dminx, dminy : float
+        Distâncias mínimas permitidas em X e Y, respectivamente.
+    LX, LY : float
+        Comprimentos das dimensões do pavimento em X e Y.
+    hmax, bmax : float
+        Altura máxima e largura máxima permitidas para as vigas.
+    Q : float
+        Sobrecarga aplicada (Tf/m²).
+    GPR : float
+        Carga permanente do pavimento (Tf/m²).
+    GPL : float
+        Carga permanente das paredes (Tf/m²).
+    ccml : np.ndarray
+        Custos unitários de concreto para diferentes resistências à compressão.
+    cpm : np.ndarray
+        Custos unitários de concreto para diferentes classes de pilares.
+    cap : float
+        Custo unitário do aço protendido (R$/kg).
+    cad : float
+        Custo unitário do aço passivo (R$/kg).
+    numind : int
+        Número de indivíduos na população.
+    nxmax, nymax : int
+        Número máximo de divisões permitidas nas dimensões X e Y.
+    nvv : int
+        Número de variáveis vinculadas ao projeto de vigas.
+    numgen : int
+        Número de gerações a serem simuladas.
+
+    Propriedades das Lajes:
+    ------------------------
+    HL : np.ndarray
+        Altura das lajes (m).
+    A : np.ndarray
+        Área das lajes (m²).
+    YG : np.ndarray
+        Centro de gravidade das lajes (m).
+    II : np.ndarray
+        Momento de inércia das lajes (m⁴).
+    XMAX : np.ndarray
+        Máxima compressão em X das lajes.
+
+    Propriedades de Protensão:
+    --------------------------
+    PA : np.ndarray
+        Força de protensão aplicada às lajes (MN).
+    APL : np.ndarray
+        Área total de protensão nos painéis das lajes (m²).
+
+    Propriedades das Vigas:
+    ------------------------
+    NPT : np.ndarray
+        Quantidade de barras passivas de tração.
+    BP : np.ndarray
+        Área das bitolas passivas disponíveis.
+    NA : np.ndarray
+        Quantidade de cabos na camada "A".
+    NB : np.ndarray
+        Quantidade de cabos na camada "B".
+    HV : np.ndarray
+        Altura das vigas (m).
+    BV : np.ndarray
+        Base das vigas (m).
+    NMAX : np.ndarray
+        Quantidade máxima de cordoalhas permitidas por base de viga.
+    GL : np.ndarray
+        Quantidade máxima de cordoalhas por seção longitudinal.
+    GV : np.ndarray
+        Quantidade máxima de cordoalhas por seção transversal.
     """
 
     def __init__(
         self,
         subpop,
-        subapt,
         numpav,
         dminx,
         dminy,
@@ -56,38 +110,54 @@ class StructuralEvaluation:
         nymax,
         nvv,
         numgen,
-        k,
     ):
         """
-        Inicializa a classe com os parâmetros de entrada.
+        Inicializa uma instância da classe StructuralEvaluation com os parâmetros fornecidos.
 
         Parâmetros:
         -----------
         subpop : np.ndarray
-            População de indivíduos.
-        subapt : np.ndarray
-            Valores de aptidão dos indivíduos.
+            Matriz representando a população inicial de indivíduos.
         numpav : int
-            Número de pavimentos.
-        dminx, dminy : float
-            Distâncias mínimas em x e y.
-        lx, ly : float
-            Comprimento em x e y.
-        hmax, bmax : float
-            Altura e largura máximas.
-        q, gpr, gpl, ccml, cpm, cap, cad : float
-            Parâmetros diversos.
+            Número total de pavimentos do edifício.
+        dminx : float
+            Distância mínima permitida entre elementos estruturais na direção X (m).
+        dminy : float
+            Distância mínima permitida entre elementos estruturais na direção Y (m).
+        lx : float
+            Comprimento total do edifício na direção X (m).
+        ly : float
+            Comprimento total do edifício na direção Y (m).
+        hmax : float
+            Altura máxima permitida para as vigas (m).
+        bmax : float
+            Largura máxima permitida para as vigas (m).
+        q : float
+            Sobrecarga aplicada sobre os pavimentos (kN/m²).
+        gpr : float
+            Carga permanente devido ao peso próprio das lajes e acabamentos (kN/m²).
+        gpl : float
+            Carga permanente devido às paredes (kN/m²).
+        ccml : np.ndarray
+            Custos unitários do concreto por diferentes resistências à compressão (R$/m³).
+        cpm : np.ndarray
+            Custos unitários do concreto em diferentes categorias de pilares (R$/m³).
+        cap : float
+            Custo unitário do aço protendido (R$/kg).
+        cad : float
+            Custo unitário do aço passivo (R$/kg).
         numind : int
-            Número de indivíduos.
-        nxmax, nymax : int
-            Máximos valores para nx e ny.
+            Número total de indivíduos na população inicial.
+        nxmax : int
+            Máximo número de divisões permitidas na direção X.
+        nymax : int
+            Máximo número de divisões permitidas na direção Y.
         nvv : int
-            Parâmetro adicional.
+            Número de variáveis relacionadas ao projeto de vigas.
         numgen : int
-            Número de gerações.
+            Número de gerações para as simulações.
         """
         self.subpop = subpop
-        self.subapt = subapt
         self.numpav = numpav
         self.dminx = dminx
         self.dminy = dminy
@@ -107,8 +177,6 @@ class StructuralEvaluation:
         self.nymax = nymax
         self.nvv = nvv
         self.numgen = numgen
-        self.k = k
-        self.fitness = np.zeros(numind)
         # Propriedades da LAJE
         self.HL = np.zeros(32)  # Altura da Laje (m)
         self.A = np.zeros(32)  # Área da Laje (m²)
@@ -132,7 +200,7 @@ class StructuralEvaluation:
 
         # Inicializa as propriedades
         self.initialize_properties()
-        self.decode(self.k)
+        self.decode()
         self.LLJ, self.LLV, self.LLJC = self.calculate_spans()
         self.hollow_slab()
         self.inverted_t_beam()
@@ -145,14 +213,56 @@ class StructuralEvaluation:
         self.initialize_prestressing_forces()
 
     def initialize_material_properties(self):
-        """Inicializa as propriedades dos materiais."""
+        """
+        Inicializa as propriedades dos materiais de concreto.
+
+        Este método define os valores de resistência característica à compressão (fck)
+        para os concretos pré-moldado e moldado in loco, em MPa.
+
+        - `FCKPM`: Resistências características para concreto pré-moldado.
+        Valores gerados: [35, 40, 45, 50] MPa.
+        - `FCKML`: Resistências características para concreto moldado in loco.
+        Valores gerados: [20, 25, 30, 35] MPa.
+
+        Os valores são definidos em incrementos de 5 MPa a partir de um limite inferior.
+        """
         self.FCKPM = 35 + np.arange(4) * 5  # fck para pré-moldado
         self.FCKML = 20 + np.arange(4) * 5  # fck para moldado in loco
 
     def initialize_panel_properties(self):
         """
-        Inicializa os valores para as lajes em termos de altura, área,
-        centro de gravidade, momento de inércia e força de protensão.
+        Inicializa as propriedades das lajes estruturais do painel.
+
+        Este método atribui valores fixos a várias propriedades das lajes,
+        organizadas em intervalos predefinidos, para os seguintes parâmetros:
+
+        - `HL`: Altura da laje (m).
+        - `A`: Área da laje (m²).
+        - `YG`: Centro de gravidade da laje em relação à base (m).
+        - `II`: Momento de inércia da laje em relação ao eixo neutro (m⁴).
+        - `XMAX`: Distância máxima permitida em x para a laje (compressão).
+
+        Os valores são definidos em diferentes faixas de índices:
+        - Intervalos [0:4], [4:9], [9:15], [15:21], [21:27], [27:32] representam
+        diferentes tipos de lajes, com parâmetros específicos.
+
+        Valores atribuídos:
+        -------------------
+        - Índices [0:4]:
+            HL = 0.09 m, A = 0.0669983 m², YG = 0.045 m, II = 0.000063 m⁴, XMAX = 0.065 m.
+        - Índices [4:9]:
+            HL = 0.13 m, A = 0.0918954 m², YG = 0.06784 m, II = 0.00018 m⁴, XMAX = 0.07 m.
+        - Índices [9:15]:
+            HL = 0.17 m, A = 0.1136454 m², YG = 0.08847 m, II = 0.000396 m⁴, XMAX = 0.075 m.
+        - Índices [15:21]:
+            HL = 0.2 m, A = 0.1267849 m², YG = 0.1 m, II = 0.00063 m⁴, XMAX = 0.0725 m.
+        - Índices [21:27]:
+            HL = 0.21 m, A = 0.135401 m², YG = 0.108 m, II = 0.000734 m⁴, XMAX = 0.08 m.
+        - Índices [27:32]:
+            HL = 0.26 m, A = 0.1816019 m², YG = 0.129 m, II = 0.00144 m⁴, XMAX = 0.085 m.
+
+        Este método facilita o uso de lajes padronizadas em análises estruturais,
+        permitindo fácil acesso e manipulação de suas propriedades.
         """
         # Atribuições para os diferentes intervalos de i
         self.HL[0:4], self.A[0:4], self.YG[0:4], self.II[0:4], self.XMAX[0:4] = (
@@ -201,6 +311,29 @@ class StructuralEvaluation:
     def initialize_prestressing_forces(self):
         """
         Inicializa os valores das forças de protensão (PA) e áreas de protensão (APL) para os painéis das lajes.
+
+        Este método define:
+        - `PA`: Vetor contendo as forças de protensão aplicadas a cada painel das lajes.
+        Os valores são negativos, indicando forças de compressão (kN).
+        - `APL`: Vetor contendo as áreas totais de protensão associadas a cada painel (m²).
+
+        Os valores definidos para `PA` e `APL` correspondem a diferentes painéis,
+        permitindo realizar análises estruturais considerando as condições de protensão
+
+        Detalhes:
+        ---------
+        - `PA` (kN):
+        Forças negativas, representando compressões, variando em magnitude conforme o painel.
+        - `APL` (m²):
+        Áreas de protensão para cada painel, definidas em correspondência com as forças de protensão.
+
+
+        Observação:
+        - O vetor `PA` possui 32 valores, representando as forças de protensão para 32 painéis.
+        - O vetor `APL` possui 32 valores, representando as áreas associadas às forças aplicadas.
+
+        Este método organiza os dados essenciais para cálculos relacionados à protensão,
+        permitindo sua integração direta nas análises de engenharia.
         """
         self.PA = np.array(
             [
@@ -269,33 +402,46 @@ class StructuralEvaluation:
                 0.000532,
                 0.000811,
                 0.001014,
+                0.000444,
                 0.000306,
                 0.000372,
-                0.000444,
                 0.000532,
                 0.000811,
             ]
         )
 
-    def get_panel_properties(self):
-        """
-        Retorna as propriedades dos painéis em um formato de dicionário.
-        """
-        return {
-            "Altura": self.HL,
-            "Área": self.A,
-            "Centro de Gravidade": self.YG,
-            "Momento de Inércia": self.II,
-            "XMAX": self.XMAX,
-            "Força de Protensão": self.PA,
-            "Área de Protensão": self.APL,
-        }
-
     def initialize_beam_properties(self):
         """
-        Inicializa as propriedades das vigas, incluindo
-        a quantidade de barras passivas, áreas de bitolas,
-        e características geométricas da viga.
+        Inicializa as propriedades das vigas.
+
+        Este método define os parâmetros relacionados às vigas, incluindo:
+        - Quantidade de barras passivas de tração.
+        - Áreas das bitolas passivas disponíveis.
+        - Quantidade de cabos nas camadas "A" e "B".
+        - Características geométricas da viga (altura, base e NMAX).
+
+        Propriedades Definidas:
+        -----------------------
+        - `NPT` (int): Quantidade de barras passivas de tração.
+            Valores disponíveis: [0, 2, 4, 6].
+        - `BP` (m²): Áreas das bitolas passivas disponíveis.
+            Valores disponíveis correspondem a diâmetros típicos:
+            [6mm, 8mm, 10mm, 12.5mm].
+        - `NA` (int): Quantidade de cabos na camada "A".
+            Valores disponíveis: [3, 5, ..., 23].
+        - `NB` (int): Quantidade de cabos na camada "B".
+            Valores disponíveis: [0, 2, ..., 14].
+        - `HV` (m): Altura das vigas.
+            Calculada para cinco valores-base repetidos em seis intervalos, com ajustes finais.
+        - `BV` (m): Base das vigas.
+            Valores pré-definidos em faixas de 0.40m a 0.90m.
+        - `NMAX` (int): Máximo de cabos suportados por camada.
+            Valores definidos em faixas, de 13 a 23.
+
+        Observação:
+        -----------
+        Os vetores `HV`, `BV` e `NMAX` são ajustados para incluir dois valores extras no final,
+        replicando valores próximos para garantir a consistência dos dados.
         """
         # Quantidade de barras passivas de tração
         self.NPT = np.array([0, 2, 4, 6])
@@ -343,6 +489,20 @@ class StructuralEvaluation:
         self.BV[31] = self.BV[29]
         self.NMAX[31] = self.NMAX[29]
 
+    def get_panel_properties(self):
+        """
+        Retorna as propriedades dos painéis em um formato de dicionário.
+        """
+        return {
+            "Altura": self.HL,
+            "Área": self.A,
+            "Centro de Gravidade": self.YG,
+            "Momento de Inércia": self.II,
+            "XMAX": self.XMAX,
+            "Força de Protensão": self.PA,
+            "Área de Protensão": self.APL,
+        }
+
     def get_beam_properties(self):
         """
         Retorna as propriedades das vigas em um formato de dicionário.
@@ -359,47 +519,61 @@ class StructuralEvaluation:
 
     # ROTINA DE DECODIFICAÇÂO
 
-    def decode(self, k):
+    def decode(self):
         """
-        Realiza a decodificação das variáveis a partir do índice k da população.
-        """
-        self.DL = self.subpop[k, 0]  # Já é o próprio valor
+        Realiza a decodificação das variáveis a partir dos valores binários da subpopulação.
 
-        self.PM = int(2 * self.subpop[k, 1] + self.subpop[k, 2] + 1)  # Auxiliar
-        self.CML = int(2 * self.subpop[k, 3] + self.subpop[k, 4] + 1)  # Auxiliar
+        Este método converte os valores binários contidos na subpopulação (`subpop`)
+        em parâmetros numéricos utilizados para caracterizar a solução.
+
+        Decodificações:
+        ---------------
+        - DL: Valor direto (já decodificado).
+        - PM, CML, VL: Parâmetros auxiliares, obtidos a partir de combinações binárias.
+        - ANPT, ABP, ANA, ANB: Índices para listas específicas, decodificados por pesos binários.
+        - NX, NY, VV: Variáveis dependentes calculadas com base nas funções auxiliares.
+        - NA, NB: Ajustados para respeitar restrições geométricas.
+        - Penalidades: Aplicadas para evitar configurações inválidas.
+
+        Observação:
+        -----------
+        As funções auxiliares `calculate_nx`, `calculate_ny`, e `calculate_vv` são chamadas
+        para determinar valores específicos.
+        """
+
+        self.DL = self.subpop[0]  # Já é o próprio valor
+
+        self.PM = int(2 * self.subpop[1] + self.subpop[2])  # Auxiliar
+        self.CML = int(2 * self.subpop[3] + self.subpop[4])  # Auxiliar
 
         self.VL = int(
-            +16 * self.subpop[k, 5]
-            + 8 * self.subpop[k, 6]
-            + 4 * self.subpop[k, 7]
-            + 2 * self.subpop[k, 8]
-            + 1 * self.subpop[k, 9]
-            + 1
+            +16 * self.subpop[5]
+            + 8 * self.subpop[6]
+            + 4 * self.subpop[7]
+            + 2 * self.subpop[8]
+            + 1 * self.subpop[9]
         )  # Auxiliar
 
-        self.ANPT = int(
-            2 * self.subpop[k, 10] + 1 * self.subpop[k, 11] + 1
-        )  # Auxiliar Lista NPT
+        self.ANPT = int(2 * self.subpop[10] + 1 * self.subpop[11])  # Auxiliar Lista NPT
         self.ABP = int(
-            2 * self.subpop[k, 12] + 1 * self.subpop[k, 13] + 1
+            2 * self.subpop[12] + 1 * self.subpop[13]
         )  # Auxiliar p a lista BP
         self.ANA = int(
-            8 * self.subpop[k, 14]
-            + 4 * self.subpop[k, 15]
-            + 2 * self.subpop[k, 16]
-            + 1 * self.subpop[k, 17]
-            + 1
+            8 * self.subpop[14]
+            + 4 * self.subpop[15]
+            + 2 * self.subpop[16]
+            + 1 * self.subpop[17]
         )  # Auxiliar
         self.ANB = int(
-            4 * self.subpop[k, 18] + 2 * self.subpop[k, 19] + 1 * self.subpop[k, 20] + 1
+            4 * self.subpop[18] + 2 * self.subpop[19] + 1 * self.subpop[20]
         )  # Auxiliar
 
         # NX decodificação
-        self.NX = self.calculate_nx(k)
+        self.NX = self.calculate_nx()
         # NY decodificação
-        self.NY = self.calculate_ny(k)
+        self.NY = self.calculate_ny()
         # VV decodificação
-        VV = self.calculate_vv(k)
+        VV = self.calculate_vv()
 
         # Redução do domínio da base
         self.VV = int(self.reduce_domain(VV))
@@ -420,39 +594,47 @@ class StructuralEvaluation:
         if self.NY > AJY:
             self.NY *= 100
 
-    def calculate_nx(self, k):
+    def calculate_nx(self):
         """
-        Calcula NX.
+        Calcula o valor de NX com base nos bits da subpopulação.
+
+        NX é determinado pela combinação binária dos bits subsequentes,
+        a partir de 20 + 1 até 20 + self.nxmax.
         """
         NX = 0
         for i in range(1, self.nxmax + 1):
-            NX += self.subpop[k, 20 + i] * (2 ** (self.nxmax - i))
+            NX += self.subpop[20 + i] * (2 ** (self.nxmax - i))
         return NX + 1
 
-    def calculate_ny(self, k):
+    def calculate_ny(self):
         """
-        Calcula NY.
+        Calcula o valor de NY com base nos bits da subpopulação.
+
+        NY é calculado similarmente ao NX, mas com deslocamento após NX.
         """
         NY = 0
         for i in range(1, self.nymax + 1):
 
-            NY += self.subpop[k, 20 + self.nxmax + i] * (2 ** (self.nymax - i))
+            NY += self.subpop[20 + self.nxmax + i] * (2 ** (self.nymax - i))
         return NY + 1
 
-    def calculate_vv(self, k):
+    def calculate_vv(self):
         """
-        Calcula VV.
+        Calcula o valor de VV com base nos bits da subpopulação.
+
+        VV é calculado após os bits utilizados para NX e NY.
         """
         VV = 0
         for i in range(1, self.nvv + 1):
-            VV += self.subpop[k, 20 + self.nxmax + self.nymax + i] * (
-                2 ** (self.nvv - i)
-            )
-        return VV + 1
+            VV += self.subpop[20 + self.nxmax + self.nymax + i] * (2 ** (self.nvv - i))
+        return VV
 
     def reduce_domain(self, VV):
         """
-        Reduz o domínio da base.
+        Reduz o domínio do valor de VV com base nas regras do domínio bmax.
+
+        O ajuste é feito de acordo com a base máxima (bmax), garantindo
+        que o valor de VV permaneça dentro de limites aceitáveis para cada faixa de bmax.
         """
         if self.bmax == 0.40:
             if VV > 5:
@@ -471,7 +653,7 @@ class StructuralEvaluation:
                 VV -= 5
         return VV
 
-    def display_results(self, k):
+    def display_results(self):
         """
         Exibe os resultados da decodificação.
         """
@@ -484,19 +666,23 @@ class StructuralEvaluation:
         print(f"VV: {self.VV}")
         print(f"NA[{self.ANA}]: {self.NA[self.ANA]}")
         print(f"NB[{self.ANB}]: {self.NB[self.ANB]}")
-        print(f"ANPT: {2 * self.subpop[k, 10] + 1 * self.subpop[k, 11] + 1}")
-        print(f"ABP: {2 * self.subpop[k, 12] + 1 * self.subpop[k, 13] + 1}")
+        print(f"ANPT: {2 * self.subpop[10] + 1 * self.subpop[11] + 1}")
+        print(f"ABP: {2 * self.subpop[12] + 1 * self.subpop[13] + 1}")
 
     def calculate_spans(self):
         """
-        Calcula os vãos corrigidos com base em NX e NY.
+        Calcula os vãos corrigidos com base em NX, NY e a direção da carga.
 
-        Parâmetros:
-        NX (int): Número de divisões no eixo X.
-        NY (int): Número de divisões no eixo Y.
+        Este método utiliza as divisões do eixo X (NX) e do eixo Y (NY),
+        bem como o fator de distribuição de carga (DL), para calcular os
+        vãos da laje em duas direções e aplicar uma correção com base na base
+        da viga correspondente (BV).
 
         Retorna:
-        LLJC (float): Vão laje corrigido.
+            tuple: Contém os seguintes valores:
+                - LLJ (float): Vão da laje na direção principal.
+                - LLV (float): Vão da laje na direção secundária.
+                - LLJC (float): Vão corrigido da laje na direção principal.
         """
         LLJ = (self.LX / self.NX) * (1 - self.DL) + (self.LY / self.NY) * self.DL  # (m)
         LLV = (self.LX / self.NX) * self.DL + (self.LY / self.NY) * (1 - self.DL)  # (m)
@@ -508,19 +694,53 @@ class StructuralEvaluation:
     # LAJES ALVEOLARES
 
     def hollow_slab(self):
+        """
+        Realiza os cálculos principais para a análise de uma laje nervurada.
+
+        Este método executa uma sequência de cálculos organizados em etapas, desde a
+        definição de propriedades geométricas e materiais até as verificações de tensões
+        e deslocamentos, respeitando os estados limites de serviço (ELS) e últimos (ELU).
+        """
+        # Etapa 1: Cálculo das propriedades da laje
         self.M, self.AC, self.YGC, self.IC = self.calculate_hollow_slab_properties()
-        self.EP, self.EPC, self.WINF, self.WSUP, self.WCINF, self.WCSUP = (
-            self.calculate_excentricity_modulus()
-        )
+
+        # Etapa 2: Determinação dos módulos de excentricidade
+        (
+            self.EP,
+            self.EPC,
+            self.WINF,
+            self.WSUP,
+            self.WCINF,
+            self.WCSUP,
+        ) = self.calculate_excentricity_modulus()
+
+        # Etapa 3: Cálculo dos carregamentos aplicados na laje
         self.loads = self.calculate_slab_loads()
+
+        # Etapa 4: Momentos fletores e esforços cortantes
         self.ML, self.RL, self.MLD, self.VLD = self.calculate_moments_and_stresses()
+
+        # Etapa 5: Tensões na fase de concretagem
         self.TINF, self.TSUP = self.calculate_stresses_concreting_phase()
+
+        # Etapa 6: Tensões após a concretagem
         self.TCINF, self.TCSUP = self.calculate_stresses_after_concreting()
+
+        # Etapa 7: Perda de protensão após a transferência
         self.PT = self.calculate_prestress_after_transfer()
+
+        # Etapa 8: Perda de protensão ao longo do tempo
         self.PINF = self.calculate_infinite_time_prestress()
-        self.TINPT, self.TSUPT, self.TINPI, self.TSUPI = (
-            self.calculate_stresses_due_to_prestress()
-        )
+
+        # Etapa 9: Tensões devido à protensão
+        (
+            self.TINPT,
+            self.TSUPT,
+            self.TINPI,
+            self.TSUPI,
+        ) = self.calculate_stresses_due_to_prestress()
+
+        # Etapa 10: Tensões nos vazios
         (
             self.TDESI,
             self.TDESS,
@@ -531,15 +751,31 @@ class StructuralEvaluation:
             self.TMI,
             self.TMS,
         ) = self.calculate_void_stresses()
+
+        # Etapa 11: Limites de tensões
         self.LCJ, self.LTJ, self.LCK, self.LTK = self.calculate_stress_limits()
+
+        # Etapa 12: Tensões para verificação do ELS
         self.DES, self.FF = self.calculate_els_stresses_slab()
+
+        # Etapa 13: Solicitações para o ELU
         self.XL, self.DDL, self.MRESL = self.calculate_elu_solicitations()
+
+        # Etapa 14: Flechas na laje
         self.CFI, self.CFT = self.calculate_deflection_slab()
+
+        # Etapa 15: Flechas devido ao carregamento
         self.fi, self.ft = self.calculate_deflection_loading()
 
     def calculate_hollow_slab_properties(self):
         """
-        Calculate section properties of the composite slab (Laje).
+        Calcula as propriedades da seção da laje composta (Laje).
+
+        Retorna:
+            M (float): Momento de inércia da seção.
+            AC (float): Área equivalente da laje.
+            YGC (float): Distância do centroide da seção composta.
+            IC (float): Momento de inércia total da seção composta.
         """
         M = (self.FCKML[self.CML] / self.FCKPM[self.PM]) ** 0.5
         AC = M * 1.2 * 0.05
@@ -1507,22 +1743,22 @@ class StructuralEvaluation:
 
         Returns:
             tuple: A tuple containing:
-                - QDV (float): The number of beams per floor.
-                - QDL (float): The number of slabs per floor.
+                - QDV (int): The number of beams per floor.
+                - QDL (int): The number of slabs per floor.
                 - QDP (int): The number of columns per floor.
         """
         # Calculate number of beams per floor
-        QDV = self.NX * (self.NY + 1) * self.DL + self.NY * (self.NX + 1) * (
+        QDV = int(self.NX * (self.NY + 1) * self.DL + self.NY * (self.NX + 1) * (
             1 - self.DL
-        )
+        ))
 
         # Calculate number of slabs per floor
-        QDL = ((self.NX) * self.LLV / 1.2) * self.NY * self.DL + (
+        QDL = int(((self.NX) * self.LLV / 1.2) * self.NY * self.DL + (
             (self.NY) * self.LLV / 1.2
-        ) * self.NX * (1 - self.DL)
+        ) * self.NX * (1 - self.DL))
 
         # Calculate number of columns per floor
-        QDP = (self.NX + 1) * (self.NY + 1)
+        QDP = int((self.NX + 1) * (self.NY + 1))
 
         return QDV, QDL, QDP
 
@@ -1581,6 +1817,7 @@ class StructuralEvaluation:
                 - VADV (float): The volume of non-prestressed steel in beams.
         """
         # Volume of beams
+
         VPMV = (
             (self.BV[self.VV] + 0.3) * self.HV[self.VV]
             + self.BV[self.VV] * (self.HL[self.VL] - 0.05)
@@ -1759,6 +1996,7 @@ class StructuralEvaluation:
         """
         # Custo do aço de protensão
         CUSTOPROT = (
+
             (1.085 * self.VAPV * 7810.65 * self.QDV + self.VAPL * 7857 * self.QDL)
             * self.cap
             * self.numpav
@@ -1842,7 +2080,7 @@ class StructuralEvaluation:
 
         return CUSTOFAB, CUSTOTAL, CUSTOTAL_PER_FLOOR, STRUCTURE_COST, F
 
-    def get_aptidao(self):
+    def get_fitness(self):
         return self.F
 
     def calcular_vtc(self):
@@ -1855,59 +2093,74 @@ class StructuralEvaluation:
         )
         return self.vtc
 
-    def mostrar_resultados(self):
+    def mostrar_resultados(self, arquivo=None):
+        """
+        Exibe os resultados do cálculo estrutural.
+        Se um arquivo for fornecido, grava os resultados no arquivo.
+        
+        :param arquivo: Instância de ArquivoSaida para gravação (opcional).
+        """
         self.calcular_vtc()
-        # Exibindo as variáveis de projeto
-        print(f"--- Variáveis Projeto Indivíduo ---")
-        print(f"NumGen= {self.numgen}")
-        print(f"NX= {self.NX}")
-        print(f"NY= {self.NY}")
-        print(f"DL= {self.DL}")
-        print(f"FCKCML= {self.FCKML[self.CML]}")
-        print(f"FCKCPM= {self.FCKPM[self.PM]}")
-        print(f"HL= {self.HL[self.VL]}")
-        print(f"LLJ= {self.LLJ}")
-        print(f"HV= {self.HV[self.VV]}")
-        print(f"BV= {self.BV[self.VV]}")
-        print(f"LLV= {self.LLV}")
-        print(f"NA= {self.NA[self.ANA]}")
-        print(f"NB= {self.NB[self.ANB]}")
-        print(f"NPT= {self.NPT[self.ANPT]}")
 
-        # Exibindo os custos
-        print(f"Custo Concreto= {self.CUSTOCONC:.2f}")
-        print(f"Volume Concreto= {self.vtc:.2f}")
-        print(f"Custo Protensão= {self.CUSTOPROT:.2f}")
-        print(f"Custo Aço Passivo= {self.CUSTOAD:.2f}")
-        print(f"Custo Transporte= {self.CTT:.2f}")
-        print(f"Custo Montagem= {self.CTMT:.2f}")
+        # Buffer para os resultados
+        resultados = []
 
-        print(f"Custo Desp Operacional= {self.CDOP:.2f}")
-        print(f"Custo %Fabricacao= {(self.CUSTOFAB / self.CUSTOEST) * 100:.2f}%")
-        print(f"Custo %Transporte= {(self.CTT / self.CUSTOEST) * 100:.2f}%")
-        print(f"Custo %Montagem= {(self.CTMT / self.CUSTOEST) * 100:.2f}%")
-        print(f"Custo Total= {self.CUSTOTAL:.2f}")
-        print(f"Pentotal= {self.PENTOTAL:.2f}")
-        print(f"Apt= {self.F:.2f}")
-        print(
-            f"Custo Estrutura/m2= {(self.CUSTOEST * 1.33) / (self.LX * self.LY * self.numpav):.2f}"
-        )
+        # Variáveis de projeto
+        resultados.append("--- Variáveis Projeto Indivíduo ---")
+        resultados.append(f"NumGen= {self.numgen}")
+        resultados.append(f"NX= {self.NX}")
+        resultados.append(f"NY= {self.NY}")
+        resultados.append(f"DL= {self.DL}")
+        resultados.append(f"FCKCML= {self.FCKML[self.CML]}")
+        resultados.append(f"FCKCPM= {self.FCKPM[self.PM]}")
+        resultados.append(f"HL= {self.HL[self.VL]}")
+        resultados.append(f"LLJ= {self.LLJ}")
+        resultados.append(f"HV= {self.HV[self.VV]:.2f}")
+        resultados.append(f"BV= {self.BV[self.VV]:.2f}")
+        resultados.append(f"LLV= {self.LLV}")
+        resultados.append(f"NA= {self.NA[self.ANA]}")
+        resultados.append(f"NB= {self.NB[self.ANB]}")
+        resultados.append(f"NPT= {self.NPT[self.ANPT]}")
 
-        # Exibindo dados da laje
-        print(f"--- DADOS DA LAJE INDIVÍDUO ---")
-        print(f"VL= {self.VL}")
-        print(f"flecha (Laje)= {self.fi}")
-        print(f"f-Total (Laje)= {self.ft}")
-        print(f"LP= {self.LP}")
+        # Custos
+        resultados.append(f"Custo Concreto= {self.CUSTOCONC:.2f}")
+        resultados.append(f"Volume Concreto= {self.vtc:.2f}")
+        resultados.append(f"Custo Protensão= {self.CUSTOPROT:.2f}")
+        resultados.append(f"Custo Aço Passivo= {self.CUSTOAD:.2f}")
+        resultados.append(f"Custo Transporte= {self.CTT:.2f}")
+        resultados.append(f"Custo Montagem= {self.CTMT:.2f}")
+        resultados.append(f"Custo Desp Operacional= {self.CDOP:.2f}")
+        resultados.append(f"Custo %Fabricacao= {(self.CUSTOFAB / self.CUSTOEST) * 100:.2f}%")
+        resultados.append(f"Custo %Transporte= {(self.CTT / self.CUSTOEST) * 100:.2f}%")
+        resultados.append(f"Custo %Montagem= {(self.CTMT / self.CUSTOEST) * 100:.2f}%")
+        resultados.append(f"Custo Total= {self.CUSTOTAL:.2f}")
+        resultados.append(f"Pentotal= {self.PENTOTAL:.2f}")
+        resultados.append(f"Apt= {self.F:.2f}")
+        resultados.append(f"Custo Estrutura/m2= {(self.CUSTOEST * 1.33) / (self.LX * self.LY * self.numpav):.2f}")
 
-        # Exibindo dados da viga
-        print(f"--- DADOS DA VIGA INDIVÍDUO ---")
-        print(f"VV= {self.VV}")
-        print(f"cf-Total (Viga)= {self.CFTV}")
-        print(f"f-Total (Viga)= {self.FTV}")
-        print(f"qdv= {self.QDV}")
-        print(f"QDP= {self.QDP}")
-        print(f"QDL= {self.QDL}")
+        # Dados da laje
+        resultados.append("--- DADOS DA LAJE INDIVÍDUO ---")
+        resultados.append(f"VL= {self.VL}")
+        resultados.append(f"flecha (Laje)= {self.fi}")
+        resultados.append(f"f-Total (Laje)= {self.ft}")
+        resultados.append(f"LP= {self.LP}")
+
+        # Dados da viga
+        resultados.append("--- DADOS DA VIGA INDIVÍDUO ---")
+        resultados.append(f"VV= {self.VV}")
+        resultados.append(f"cf-Total (Viga)= {self.CFTV}")
+        resultados.append(f"f-Total (Viga)= {self.FTV}")
+        resultados.append(f"qdv= {self.QDV}")
+        resultados.append(f"QDP= {self.QDP}")
+        resultados.append(f"QDL= {self.QDL}")
+
+        # Escrever no arquivo ou exibir no console
+        if arquivo:
+            for linha in resultados:
+                arquivo.file_handler.write(linha + "\n")
+        else:
+            for linha in resultados:
+                print(linha)
 
     def calculate_restrictions_final(self):
         # Verificação das restrições
@@ -1924,9 +2177,7 @@ def main():
     # Parâmetros de entrada
     numind = 50
     numgen = 50
-    k = 49
-    subpop = np.random.rand(numind, numgen)  # População de indivíduos
-    subapt = np.random.rand(numind)  # Aptidões aleatórias
+    subpop = np.random.randint(0, 2, size=(numind, numgen))  # População de indivíduos
     numpav = 8  # Número de pavimentos
     dminx, dminy = 3.0, 3.0  # Distâncias mínimas em x e y
     lx, ly = 20.0, 15.0  # Dimensões da estrutura
@@ -1936,13 +2187,12 @@ def main():
     ccml = np.array([147, 158, 171, 185])  # Custos por metro cúbico (exemplo)
     cpm = np.array([185, 200, 216, 233])  # Custos por metro linear (exemplo)
     cap, cad = 7, 4  # Capacidades diversas
-    nxmax, nymax = 8, 8  # Limites de subdivisões
+    nxmax, nymax = 3, 3  # Limites de subdivisões
     nvv = 4  # Parâmetro adicional
 
     # Instanciando a classe
     evaluation = StructuralEvaluation(
-        subpop=subpop,
-        subapt=subapt,
+        subpop=subpop[0],
         numpav=numpav,
         dminx=dminx,
         dminy=dminy,
@@ -1962,10 +2212,10 @@ def main():
         nymax=nymax,
         nvv=nvv,
         numgen=numgen,
-        k=k,
     )
 
-    aptidao = evaluation.get_aptidao()
+    aptidao = evaluation.get_fitness()
+    #print(evaluation.mostrar_resultados())
 
     # Exibindo os resultados
     print(f"Aptidao: {aptidao}")

@@ -6,25 +6,28 @@ class UniformCrossover:
         """
         Initializes the uniform crossover object with the given parameters.
 
-        :param parents: 2D array where each row is a parent and each column is a gene.
-        :param num_genes: Number of genes per individual.
-        :param num_crossovers: Number of crossover pairs to generate.
+        :param parents: np.ndarray
+            A 2D array of shape (num_parents, num_genes), where each row is a parent and each column is a gene.
+        :param num_genes: int
+            Number of genes per individual.
+        :param num_crossovers: int
+            Number of crossover pairs to generate.
         """
         # Ensure number of parents is even for pairing
         if len(parents) % 2 != 0:
             raise ValueError("Number of parents must be even.")
-        
+
         self.parents = parents
         self.num_genes = num_genes
         self.num_crossovers = num_crossovers
         self.offspring = np.zeros_like(parents)  # To store the offspring
 
-
     def generate_crossover_mask(self):
         """
-        Generates a random mask for each gene in the population.
+        Generates random masks for all crossover pairs.
 
-        :return: A 2D array representing crossover masks for each pair.
+        :return: np.ndarray
+            A 2D array of shape (num_crossovers, num_genes) representing crossover masks.
         """
         return np.random.randint(0, 2, size=(self.num_crossovers, self.num_genes))
 
@@ -42,14 +45,17 @@ class UniformCrossover:
             mask = masks[i]  # Select a crossover mask for this pair
 
             for j in range(self.num_genes):
-                # First child takes genes based on the mask
-                if mask[j] == 0:
-                    self.offspring[i, j] = self.parents[i, j]
-                    self.offspring[i + 1, j] = self.parents[i + 1, j]
+                # Verificar se i + 1 e j estão dentro dos limites
+                if i + 1 < self.parents.shape[0] and i + 1 < self.offspring.shape[0]:
+                    # First child takes genes based on the mask
+                    if mask[j] == 0:
+                        self.offspring[i, j] = self.parents[i, j]
+                        self.offspring[i + 1, j] = self.parents[i + 1, j]
+                    else:
+                        self.offspring[i, j] = self.parents[i + 1, j]
+                        self.offspring[i + 1, j] = self.parents[i, j]
                 else:
-                    self.offspring[i, j] = self.parents[i + 1, j]
-                    self.offspring[i + 1, j] = self.parents[i, j]
-
+                    pass
         return self.offspring
 
     def get_results(self):

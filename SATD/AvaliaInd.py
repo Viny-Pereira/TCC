@@ -912,7 +912,7 @@ class AvaliadorDeIndividuos:
             float: Peso próprio da viga (tf/m).
         """
         return self.AV * self.pp_concrete
-    
+
     def calc_inertia_isolated_beam(self):
         """
         Calcula o momento de inércia da viga isolada e o centro de gravidade.
@@ -921,14 +921,19 @@ class AvaliadorDeIndividuos:
             tuple: Centro de gravidade (ygv) e momento de inércia (iv).
         """
         ME = (self.BV[self.VV] + 0.3) * (self.HV[self.VV] ** 2) / 2
-        + self.BV[self.VV] * (self.HL[self.VL] - 0.05) * (self.HV[self.VV] + (self.HL[self.VL] - 0.05) / 2)
+        +self.BV[self.VV] * (self.HL[self.VL] - 0.05) * (
+            self.HV[self.VV] + (self.HL[self.VL] - 0.05) / 2
+        )
         YGV = ME / self.AV
         IV = (
             (self.BV[self.VV] + 0.3) * (self.HV[self.VV] ** 3) / 12
             + self.BV[self.VV] * ((self.HL[self.VL] - 0.05) ** 3) / 12
-            + (self.BV[self.VV] + 0.3) * self.HV[self.VV] * ((self.HV[self.VV] / 2 - YGV) ** 2)
-            + self.BV[self.VV] * (self.HL[self.VL] - 0.05) * ((self.HV[self.VV] 
-            + (self.HL[self.VL] - 0.05) / 2 - YGV) ** 2)
+            + (self.BV[self.VV] + 0.3)
+            * self.HV[self.VV]
+            * ((self.HV[self.VV] / 2 - YGV) ** 2)
+            + self.BV[self.VV]
+            * (self.HL[self.VL] - 0.05)
+            * ((self.HV[self.VV] + (self.HL[self.VL] - 0.05) / 2 - YGV) ** 2)
         )
         return YGV, IV
 
@@ -958,7 +963,7 @@ class AvaliadorDeIndividuos:
             * (((self.HV[self.VV] + ((self.HL[self.VL] + 0.05) / 2)) - YGCV) ** 2)
         )
         return AVC, YGCV, IVC
-    
+
     def calc_ppvc(self):
         """
         Calcula o peso próprio da viga isolada.

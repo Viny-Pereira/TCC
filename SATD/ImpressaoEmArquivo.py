@@ -1,5 +1,6 @@
 import os
 
+
 class ArquivoSaida:
     def __init__(self, arqou):
         """
@@ -17,20 +18,28 @@ class ArquivoSaida:
         """
         while True:
             if os.path.exists(self.arqou):
-                resposta = input(f"O arquivo '{self.arqou}' já existe. Deseja sobrescrever? (s/n): ").strip().lower()
-                if resposta == 's':
+                resposta = (
+                    input(
+                        f"O arquivo '{self.arqou}' já existe. Deseja sobrescrever? (s/n): "
+                    )
+                    .strip()
+                    .lower()
+                )
+                if resposta == "s":
                     try:
-                        self.file_handler = open(self.arqou, 'w')
+                        self.file_handler = open(self.arqou, "w")
                         print(f"Arquivo '{self.arqou}' foi sobrescrito com sucesso.")
                         break
                     except Exception as e:
                         print(f"Erro ao abrir o arquivo para sobrescrita: {e}")
                         break
                 else:
-                    self.arqou = input("Informe um novo nome para o arquivo (inclua a extensão): ").strip()
+                    self.arqou = input(
+                        "Informe um novo nome para o arquivo (inclua a extensão): "
+                    ).strip()
             else:
                 try:
-                    self.file_handler = open(self.arqou, 'w')
+                    self.file_handler = open(self.arqou, "w")
                     print(f"Novo arquivo '{self.arqou}' foi criado com sucesso.")
                     break
                 except Exception as e:
@@ -38,6 +47,7 @@ class ArquivoSaida:
                     break
 
         return self.file_handler
+
 
 # Exemplo de uso:
 arquivo = ArquivoSaida("saida_resultados.txt")
