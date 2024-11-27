@@ -2109,12 +2109,20 @@ class StructuralEvaluation:
         )
         return self.vtc
 
-    def mostrar_resultados(self, arquivo=None):
+    def mostrar_resultados(self, individuo_n):
         """
-        Exibe os resultados do cálculo estrutural.
-        Se um arquivo for fornecido, grava os resultados no arquivo.
+        Displays the structural calculation results and optionally writes them to an output file.
 
-        :param arquivo: Instância de ArquivoSaida para gravação (opcional).
+        This method calculates and organizes the structural and cost-related metrics for the individual. 
+        The results are returned as a list of formatted strings, ready for display or writing to an output file.
+
+        Steps performed:
+        1. Calculates structural parameters (e.g., concrete volumes, costs).
+        2. Organizes project variables, costs, and additional structural details for display.
+        3. Optionally, supports saving results via an external file handling mechanism.
+
+        Returns:
+            list: A list of strings, where each string contains a formatted line of results.
         """
         self.calcular_vtc()
 
@@ -2122,7 +2130,7 @@ class StructuralEvaluation:
         resultados = []
 
         # Variáveis de projeto
-        resultados.append("--- Variáveis Projeto Indivíduo ---")
+        resultados.append(f"--- Variáveis Projeto Indivíduo {individuo_n} ---")
         resultados.append(f"NumGen= {self.numgen}")
         resultados.append(f"NX= {self.NX}")
         resultados.append(f"NY= {self.NY}")
@@ -2159,14 +2167,14 @@ class StructuralEvaluation:
         )
 
         # Dados da laje
-        resultados.append("--- DADOS DA LAJE INDIVÍDUO ---")
+        resultados.append(f"--- DADOS DA LAJE INDIVÍDUO {individuo_n} ---")
         resultados.append(f"VL= {self.VL}")
         resultados.append(f"flecha (Laje)= {self.fi}")
         resultados.append(f"f-Total (Laje)= {self.ft}")
         resultados.append(f"LP= {self.LP}")
 
         # Dados da viga
-        resultados.append("--- DADOS DA VIGA INDIVÍDUO ---")
+        resultados.append(f"--- DADOS DA VIGA INDIVÍDUO {individuo_n} ---")
         resultados.append(f"VV= {self.VV}")
         resultados.append(f"cf-Total (Viga)= {self.CFTV}")
         resultados.append(f"f-Total (Viga)= {self.FTV}")
@@ -2174,13 +2182,7 @@ class StructuralEvaluation:
         resultados.append(f"QDP= {self.QDP}")
         resultados.append(f"QDL= {self.QDL}")
 
-        # Escrever no arquivo ou exibir no console
-        if arquivo:
-            for linha in resultados:
-                arquivo.file_handler.write(linha + "\n")
-        else:
-            for linha in resultados:
-                print(linha)
+        return resultados
 
     def calculate_restrictions_final(self):
         # Verificação das restrições

@@ -2,6 +2,8 @@ import numpy as np
 from AvaliaIndF import StructuralEvaluation
 from CruzUniforme import UniformCrossover
 from building_design import BuildingDesignParameters
+from ImpressaoEmArquivo import FileWriter
+
 
 
 class GeneticAlgorithm:
@@ -34,12 +36,14 @@ class GeneticAlgorithm:
         :param building_params: An instance of the BuildingDesignParameters class containing the design parameters.
         """
         self.params = building_params.get_parameters()
+        self.arqout = self.params["arqout"]
         self.num_individuals = self.params["numind"]
         self.num_genes = self.params["numgen"]
         self.max_generations = self.params["maxger"]
         self.crossover_rate = self.params["cruz_taxa"]
         self.mutation_rate = self.params["pmut"]
         self.elitism_rate = self.params["elit"] / self.num_individuals
+
         # Assuming structural_params contains necessary parameters for evaluation
         self.structural_params = {
             "numpav": self.params["numpav"],
@@ -63,6 +67,7 @@ class GeneticAlgorithm:
             "numgen": self.params["numgen"],
         }
 
+        self.evaluation = StructuralEvaluation(**self.structural_params)
         self.population = self._initialize_population()
         self.fitness = np.zeros(self.num_individuals)
         self.fitness_history = []
@@ -83,11 +88,9 @@ class GeneticAlgorithm:
         """
         self.fitness = np.zeros(self.num_individuals)
 
-        evaluation = StructuralEvaluation(**self.structural_params)
         for i, individual in enumerate(self.population):
-            evaluation.initialize_individual(individual)
-            self.fitness[i] = evaluation.get_fitness()
-            print(evaluation.mostrar_resultados())
+            self.evaluation.initialize_individual(individual)
+            self.fitness[i] = self.evaluation.get_fitness()
 
     def _selection(self):
         """
@@ -192,6 +195,52 @@ class GeneticAlgorithm:
         """
         best_index = np.argmax(self.fitness)
         return self.population[best_index], self.fitness[best_index]
+    
+    def sort_population_by_fitness(self):
+        """
+        Ordena a população e os valores de fitness em ordem decrescente de fitness.
+
+        :return: tuple: (sorted_population, sorted_fitness)
+            - sorted_population: População ordenada pela fitness.
+            - sorted_fitness: Fitness correspondente à população ordenada.
+        """
+        sorted_indices = np.argsort(self.fitness)[::-1]
+        sorted_population = self.population[sorted_indices]
+        return sorted_population
+
+    def write_population_to_file(self):
+        """
+        Writes information about the sorted population to a specified file.
+
+        This method sorts the population by fitness, evaluates each individual, and saves their 
+        detailed information to a file. Each individual is labeled with a sequential identifier.
+
+        :raises AttributeError: If `self.evaluation` or `self.arqout` is not properly initialized.
+        """
+        try:
+            # Sort the population by fitness
+            sorted_population = self.sort_population_by_fitness()
+
+            # Initialize the file writer
+            file_writer = FileWriter(self.arqout)
+
+            # Counter to track the individual index
+            count = 0
+
+            # Iterate over the sorted population and write their details to the file
+            for individual in sorted_population:
+                count += 1
+                self.evaluation.initialize_individual(individual)
+
+                # Get detailed information for the individual
+                individual_info = self.evaluation.mostrar_resultados(count)
+
+                # Write the individual's information to the file
+                file_writer.write_list_to_file(individual_info)
+
+        except AttributeError as error:
+            print(f"Error: {error}. Ensure that `self.evaluation` and `self.arqout` are initialized.")
+
 
 
 def main():
@@ -199,7 +248,7 @@ def main():
 
     # Criando a instância de BuildingDesignParameters
     building_params = BuildingDesignParameters(
-        arqout="output.sai",
+        arqout="output.txt",
         numpav=2,
         dminx=7.0,
         dminy=7.0,
@@ -210,9 +259,9 @@ def main():
         q=0.3,
         gpr=0.1,
         gpl=0.2,
-        numind=20,
+        numind=10,
         elit=5,
-        maxger=10,
+        maxger=1,
         cruz_taxa=80,
         pmut=1,
     )
@@ -225,11 +274,10 @@ def main():
 
     # Obtendo o melhor indivíduo após a execução
     best_individual, best_fitness = ga.get_best_individual()
-
+    ga.write_population_to_file()
     # Imprimindo o melhor indivíduo e sua aptidão
     print("Melhor Indivíduo:", best_individual)
     print("Aptidão do Melhor Indivíduo:", best_fitness)
-    print("GERACAO", ga.population)
 
 
 if __name__ == "__main__":

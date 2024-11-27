@@ -4,7 +4,6 @@ import json
 from building_design import BuildingDesignParameters
 from AG import GeneticAlgorithm
 
-
 class DesignApp:
     def __init__(self, root):
         self.root = root
@@ -15,17 +14,17 @@ class DesignApp:
         labels = [
             "Nome do arquivo de saída",
             "Número de pavimentos",
-            "Distância mínima X (m)",
-            "Distância mínima Y (m)",
+            "Distância mínima entre pilares X (m)",
+            "Distância mínima entre pilares Y (m)",
             "Dimensão pavimento X (m)",
             "Dimensão pavimento Y (m)",
-            "Altura máxima (m)",
+            "Altura máxima da viga (m)",
             "Largura máxima da viga (m)",
             "Sobre-carga (Tf/m²)",
             "Carga permanente - Pavimento (Tf/m²)",
             "Carga permanente - Paredes (Tf/m²)",
             "Número de indivíduos",
-            "Número para elitismo",
+            "Número de indivíduos para elitismo",
             "Número de gerações",
             "Taxa de cruzamento (%)",
             "Taxa de mutação (%)",
@@ -55,6 +54,9 @@ class DesignApp:
         tk.Button(
             root, text="Rodar Algoritmo Genético", command=self.run_genetic_algorithm
         ).grid(row=len(labels) + 3, column=0, columnspan=2)
+        tk.Button(
+            root, text="Salvar Resultados", command=self.write_file
+        ).grid(row=len(labels) + 4, column=0, columnspan=2)
 
     def validate_input(
         self,
@@ -137,7 +139,7 @@ class DesignApp:
             )
 
             # Criando uma instância de BuildingDesignParameters
-            params = BuildingDesignParameters(
+            self.params = BuildingDesignParameters(
                 arqout,
                 numpav,
                 dminx,
@@ -155,8 +157,8 @@ class DesignApp:
                 cruz_taxa,
                 pmut,
             )
-            self.params = params
-            parameters_dict = params.get_parameters()
+            self.arqout=arqout
+            parameters_dict = self.params.get_parameters()
             self.parameters_dict = parameters_dict
             # Exibindo o resumo em uma janela estruturada
             self.display_summary_window(parameters_dict)
@@ -214,13 +216,15 @@ class DesignApp:
     def run_genetic_algorithm(self):
         try:
             # Criando uma instância do algoritmo genético
-            ga = GeneticAlgorithm(self.params)
+            self.ga = GeneticAlgorithm(self.params)
 
             # Rodando o algoritmo genético
-            ga.evolve()
+            self.ga.evolve()
 
             # Obtendo o melhor indivíduo
-            best_individual, best_fitness = ga.get_best_individual()
+            best_individual, best_fitness = self.ga.get_best_individual()
+
+            self.population = self.ga.population
 
 
             messagebox.showinfo(
@@ -230,6 +234,12 @@ class DesignApp:
 
         except Exception as e:
             messagebox.showerror("Erro", f"Erro ao rodar o algoritmo genético: {e}")
+    def write_file(self):
+        self.ga.write_population_to_file()
+
+
+    
+    
 
 
 if __name__ == "__main__":

@@ -172,8 +172,8 @@ def main():
     # Solicitando entrada do usuário
     arqout = input("Nome do arquivo de saída (sem extensão): ") + ".sai"
     numpav = int(input("Número de pavimentos: "))
-    dminx = float(input("Distância mínima X (m): "))
-    dminy = float(input("Distância mínima Y (m): "))
+    dminx = float(input("Distância mínima entre pilares X (m): "))
+    dminy = float(input("Distância mínima entre pilares X (m): "))
     lx = float(input("Dimensão do pavimento X (m): "))
     ly = float(input("Dimensão do pavimento Y (m): "))
     hmax = float(input("Altura máxima (m): "))
