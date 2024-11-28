@@ -1,5 +1,6 @@
 import numpy as np
 
+
 class PopulationSorter:
     def __init__(self, population, fitness, ascending=True):
         """
@@ -10,8 +11,10 @@ class PopulationSorter:
         :param ascending: Boolean to indicate whether sorting should be ascending or descending
         """
         if len(population) != len(fitness):
-            raise ValueError("Population and fitness arrays must have the same number of individuals.")
-        
+            raise ValueError(
+                "Population and fitness arrays must have the same number of individuals."
+            )
+
         self.population = population
         self.fitness = fitness
         self.ascending = ascending
@@ -28,7 +31,7 @@ class PopulationSorter:
         sorted_fitness = self.fitness[sorted_indices]
 
         return sorted_population, sorted_fitness
-    
+
     def get_results(self):
         """
         Returns the sorted population and fitness as a dictionary.
@@ -36,7 +39,7 @@ class PopulationSorter:
         sorted_population, sorted_fitness = self.sort_population()
         return {
             "sorted_population": sorted_population,
-            "sorted_fitness": sorted_fitness
+            "sorted_fitness": sorted_fitness,
         }
 
 

@@ -3,16 +3,22 @@ from tkinter import ttk, messagebox, filedialog
 import json
 from building_design import BuildingDesignParameters
 from AG import GeneticAlgorithm
+from ImpressaoEmArquivo import FileManager
+
+
+
 
 class DesignApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("Parâmetros de Design de Edifício")
+        self.root.title("SATD")
+        self.file_manager = FileManager()
+        # Define o ícone da janela
+        self.set_window_icon()
 
         # Campos de entrada e rótulos
         self.entries = {}
         labels = [
-            "Nome do arquivo de saída",
             "Número de pavimentos",
             "Distância mínima entre pilares X (m)",
             "Distância mínima entre pilares Y (m)",
@@ -50,14 +56,21 @@ class DesignApp:
             root, text="Carregar Configuração", command=self.load_parameters
         ).grid(row=len(labels) + 2, column=0, columnspan=2)
 
-        # Novo botão para rodar o algoritmo genético
-        tk.Button(
-            root, text="Rodar Algoritmo Genético", command=self.run_genetic_algorithm
-        ).grid(row=len(labels) + 3, column=0, columnspan=2)
-        tk.Button(
-            root, text="Salvar Resultados", command=self.write_file
-        ).grid(row=len(labels) + 4, column=0, columnspan=2)
+        tk.Button(root, text="Salvar Resultados", command=self.write_file).grid(
+            row=len(labels) + 4, column=0, columnspan=2
+        )
 
+    def set_window_icon(self):
+        """
+        Define o ícone da janela principal usando uma imagem na pasta 'img'.
+        """
+        try:
+            icon_path = r"SATD\img\brasao_ufc_icon.png"  # Coloque o caminho do seu ícone aqui
+            self.icon = tk.PhotoImage(file=icon_path)
+            self.root.iconphoto(True, self.icon)  # Define o ícone da janela
+        except Exception as e:
+            messagebox.showerror("Erro", f"Erro ao carregar o ícone: {e}")
+            
     def validate_input(
         self,
         numpav,
@@ -92,7 +105,7 @@ class DesignApp:
             or maxger <= 0
             or cruz_taxa < 0
             or cruz_taxa > 100
-            or pmut < 0 
+            or pmut < 0
             or pmut > 100
         ):
             raise ValueError(
@@ -102,7 +115,6 @@ class DesignApp:
     def calculate_and_show_summary(self):
         try:
             # Capturando valores das entradas
-            arqout = self.entries["Nome do arquivo de saída"].get() + ".sai"
             numpav = int(self.entries["Número de pavimentos"].get())
             dminx = float(self.entries["Distância mínima entre pilares X (m)"].get())
             dminy = float(self.entries["Distância mínima entre pilares Y (m)"].get())
@@ -140,7 +152,6 @@ class DesignApp:
 
             # Criando uma instância de BuildingDesignParameters
             self.params = BuildingDesignParameters(
-                arqout,
                 numpav,
                 dminx,
                 dminy,
@@ -157,11 +168,11 @@ class DesignApp:
                 cruz_taxa,
                 pmut,
             )
-            self.arqout=arqout
             parameters_dict = self.params.get_parameters()
             self.parameters_dict = parameters_dict
             # Exibindo o resumo em uma janela estruturada
             self.display_summary_window(parameters_dict)
+            self.run_genetic_algorithm()
 
         except ValueError as e:
             messagebox.showerror(
@@ -226,7 +237,6 @@ class DesignApp:
 
             self.population = self.ga.population
 
-
             messagebox.showinfo(
                 "Resultado do Algoritmo Genético",
                 f"Melhor indivíduo: {best_individual}\nAptidão: {best_fitness:.2f}",
@@ -234,12 +244,34 @@ class DesignApp:
 
         except Exception as e:
             messagebox.showerror("Erro", f"Erro ao rodar o algoritmo genético: {e}")
+
     def write_file(self):
-        self.ga.write_population_to_file()
+        """
+        Gerencia o processo de salvar os resultados em um arquivo.
+        Chama o FileManager para escolher e salvar o arquivo.
+        """
+        try:
+            # Organiza os dados a serem salvos
+            sorted_population = self.ga.sort_population_by_fitness()
 
+            # Counter para o índice dos indivíduos
+            count = 0
+            result_content = []
 
-    
-    
+            for individual in sorted_population:
+                count += 1
+                self.ga.evaluation.initialize_individual(individual)
+
+                # Obtém os detalhes para o indivíduo
+                individual_info = self.ga.evaluation.mostrar_resultados(count)
+                result_content.extend(individual_info)  # Adiciona ao conteúdo para o arquivo
+
+            # Chama o FileManager para salvar o arquivo
+            self.file_manager.save_file(result_content)
+
+        except Exception as e:
+            messagebox.showerror("Erro", f"Erro ao salvar os resultados: {e}")
+
 
 
 if __name__ == "__main__":

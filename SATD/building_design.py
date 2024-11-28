@@ -44,7 +44,6 @@ class BuildingDesignParameters:
 
     def __init__(
         self,
-        arqout,
         numpav,
         dminx,
         dminy,
@@ -82,7 +81,6 @@ class BuildingDesignParameters:
         :param mutation_taxa: Mutation rate for the genetic algorithm.
         """
 
-        self.arqout = arqout
         self.numpav = numpav
         self.dminx = dminx
         self.dminy = dminy
@@ -139,7 +137,6 @@ class BuildingDesignParameters:
         :return: dict: A dictionary containing all input parameters and calculated values.
         """
         return {
-            "arqout": self.arqout,
             "numpav": self.numpav,
             "dminx": self.dminx,
             "dminy": self.dminy,
@@ -170,7 +167,6 @@ def main():
     print("Bem-vindo ao sistema de cálculo de parâmetros de design de edifícios!")
 
     # Solicitando entrada do usuário
-    arqout = input("Nome do arquivo de saída (sem extensão): ") + ".sai"
     numpav = int(input("Número de pavimentos: "))
     dminx = float(input("Distância mínima entre pilares X (m): "))
     dminy = float(input("Distância mínima entre pilares X (m): "))
@@ -190,7 +186,6 @@ def main():
     # Criando a instância e obtendo os parâmetros
     try:
         params = BuildingDesignParameters(
-            arqout,
             numpav,
             dminx,
             dminy,

@@ -2013,17 +2013,14 @@ class StructuralEvaluation:
                 - CUSTONEO: Custo do neoprene
         """
         # Custo do aço de protensão
-        print("VAPV = ", self.VAPV)
         if self.VAPV > 0:
             CUSTOPROT = (
                 (1.085 * self.VAPV * 7810.65 * self.QDV + self.VAPL * 7857 * self.QDL)
                 * self.cap
                 * self.numpav
-                
             )
         else:
-            CUSTOPROT=0
-
+            CUSTOPROT = 0
 
         # Custo do aço passivo
         CUSTOAD = (
@@ -2120,7 +2117,7 @@ class StructuralEvaluation:
         """
         Displays the structural calculation results and optionally writes them to an output file.
 
-        This method calculates and organizes the structural and cost-related metrics for the individual. 
+        This method calculates and organizes the structural and cost-related metrics for the individual.
         The results are returned as a list of formatted strings, ready for display or writing to an output file.
 
         Steps performed:
@@ -2189,8 +2186,9 @@ class StructuralEvaluation:
         resultados.append(f"QDP= {self.QDP}")
         resultados.append(f"QDL= {self.QDL}")
 
-        return resultados
-
+        return "\n".join(resultados)
+    
+    
     def calculate_restrictions_final(self):
         # Verificação das restrições
         for i in range(17):

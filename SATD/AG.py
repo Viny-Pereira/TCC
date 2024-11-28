@@ -2,8 +2,7 @@ import numpy as np
 from AvaliaIndF import StructuralEvaluation
 from CruzUniforme import UniformCrossover
 from building_design import BuildingDesignParameters
-from ImpressaoEmArquivo import FileWriter
-
+import matplotlib.pyplot as plt
 
 
 class GeneticAlgorithm:
@@ -36,7 +35,6 @@ class GeneticAlgorithm:
         :param building_params: An instance of the BuildingDesignParameters class containing the design parameters.
         """
         self.params = building_params.get_parameters()
-        self.arqout = self.params["arqout"]
         self.num_individuals = self.params["numind"]
         self.num_genes = self.params["numgen"]
         self.max_generations = self.params["maxger"]
@@ -102,15 +100,23 @@ class GeneticAlgorithm:
             - elite: The elite individuals based on fitness.
             - remaining: The remaining individuals selected for crossover.
         """
-        elite_size = int(self.num_individuals * self.elitism_rate)
-        sorted_indices = np.argsort(self.fitness)
+        # Validate elitism_rate
+        if not (0 <= self.elitism_rate <= 1):
+            raise ValueError("Elitism rate must be between 0 and 1.")
+        
+        # Calculate elite size (at least one elite individual if rate > 0)
+        elite_size = max(1, int(round(self.num_individuals * self.elitism_rate)))
+        
+        # Sort population based on fitness
+        sorted_indices = np.argsort(self.fitness)  # Ascending order for minimization
         selected_individuals = self.population[sorted_indices]
 
-        # Keep elite individuals
+        # Keep elite and separate remaining
         elite = selected_individuals[:elite_size]
         remaining = selected_individuals[elite_size:]
 
         return elite, remaining
+
 
     def _crossover(self, parents):
         """
@@ -193,9 +199,9 @@ class GeneticAlgorithm:
             - best_individual: The individual with the highest fitness.
             - best_fitness: The fitness value of the best individual.
         """
-        best_index = np.argmax(self.fitness)
+        best_index = np.argmin(self.fitness)
         return self.population[best_index], self.fitness[best_index]
-    
+
     def sort_population_by_fitness(self):
         """
         Sorts the population and fitness values in ascending order of fitness.
@@ -207,40 +213,6 @@ class GeneticAlgorithm:
         sorted_indices = np.argsort(self.fitness)  # Ascending order
         sorted_population = self.population[sorted_indices]
         return sorted_population
-    
-    def write_population_to_file(self):
-        """
-        Writes information about the sorted population to a specified file.
-
-        This method sorts the population by fitness, evaluates each individual, and saves their 
-        detailed information to a file. Each individual is labeled with a sequential identifier.
-
-        :raises AttributeError: If `self.evaluation` or `self.arqout` is not properly initialized.
-        """
-        try:
-            # Sort the population by fitness
-            sorted_population = self.sort_population_by_fitness()
-
-            # Initialize the file writer
-            file_writer = FileWriter(self.arqout)
-
-            # Counter to track the individual index
-            count = 0
-
-            # Iterate over the sorted population and write their details to the file
-            for individual in sorted_population:
-                count += 1
-                self.evaluation.initialize_individual(individual)
-
-                # Get detailed information for the individual
-                individual_info = self.evaluation.mostrar_resultados(count)
-
-                # Write the individual's information to the file
-                file_writer.write_list_to_file(individual_info)
-
-        except AttributeError as error:
-            print(f"Error: {error}. Ensure that `self.evaluation` and `self.arqout` are initialized.")
-
 
 
 def main():
@@ -248,7 +220,6 @@ def main():
 
     # Criando a instância de BuildingDesignParameters
     building_params = BuildingDesignParameters(
-        arqout="output.txt",
         numpav=2,
         dminx=7.0,
         dminy=7.0,
@@ -263,7 +234,7 @@ def main():
         elit=5,
         maxger=10,
         cruz_taxa=80,
-        pmut=1,
+        pmut=5,
     )
 
     # Criando a instância do algoritmo genético com os parâmetros do edifício
@@ -274,13 +245,16 @@ def main():
 
     # Obtendo o melhor indivíduo após a execução
     best_individual, best_fitness = ga.get_best_individual()
-    ga.write_population_to_file()
 
-    for i,j in enumerate(ga.fitness_history):
-        print(i,":",  j)
     # Imprimindo o melhor indivíduo e sua aptidão
     print("Melhor Indivíduo:", best_individual)
     print("Aptidão do Melhor Indivíduo:", best_fitness)
+    t = ga.fitness_history
+    fig, ax = plt.subplots()
+    ax.plot(t)
+
+    ax.grid()
+    plt.show()
 
 
 if __name__ == "__main__":
