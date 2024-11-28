@@ -103,7 +103,7 @@ class GeneticAlgorithm:
             - remaining: The remaining individuals selected for crossover.
         """
         elite_size = int(self.num_individuals * self.elitism_rate)
-        sorted_indices = np.argsort(self.fitness)[::-1]
+        sorted_indices = np.argsort(self.fitness)
         selected_individuals = self.population[sorted_indices]
 
         # Keep elite individuals
@@ -198,16 +198,16 @@ class GeneticAlgorithm:
     
     def sort_population_by_fitness(self):
         """
-        Ordena a população e os valores de fitness em ordem decrescente de fitness.
+        Sorts the population and fitness values in ascending order of fitness.
 
         :return: tuple: (sorted_population, sorted_fitness)
-            - sorted_population: População ordenada pela fitness.
-            - sorted_fitness: Fitness correspondente à população ordenada.
+            - sorted_population: Population sorted by fitness (lower is better).
+            - sorted_fitness: Fitness corresponding to the sorted population.
         """
-        sorted_indices = np.argsort(self.fitness)[::-1]
+        sorted_indices = np.argsort(self.fitness)  # Ascending order
         sorted_population = self.population[sorted_indices]
         return sorted_population
-
+    
     def write_population_to_file(self):
         """
         Writes information about the sorted population to a specified file.
@@ -261,7 +261,7 @@ def main():
         gpl=0.2,
         numind=10,
         elit=5,
-        maxger=1,
+        maxger=10,
         cruz_taxa=80,
         pmut=1,
     )
@@ -275,6 +275,9 @@ def main():
     # Obtendo o melhor indivíduo após a execução
     best_individual, best_fitness = ga.get_best_individual()
     ga.write_population_to_file()
+
+    for i,j in enumerate(ga.fitness_history):
+        print(i,":",  j)
     # Imprimindo o melhor indivíduo e sua aptidão
     print("Melhor Indivíduo:", best_individual)
     print("Aptidão do Melhor Indivíduo:", best_fitness)

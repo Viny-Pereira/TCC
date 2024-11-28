@@ -47,7 +47,7 @@ if __name__ == "__main__":
     fitness = np.array([0.9, 0.1, 0.8, 0.4, 0.7])
 
     # Create the PopulationSorter object
-    sorter = PopulationSorter(population, fitness, ascending=False)
+    sorter = PopulationSorter(population, fitness, ascending=True)
 
     # Get sorted results
     results = sorter.get_results()

@@ -92,7 +92,7 @@ class DesignApp:
             or maxger <= 0
             or cruz_taxa < 0
             or cruz_taxa > 100
-            or pmut < 0
+            or pmut < 0 
             or pmut > 100
         ):
             raise ValueError(

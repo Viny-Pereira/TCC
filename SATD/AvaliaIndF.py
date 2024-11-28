@@ -1117,6 +1117,7 @@ class StructuralEvaluation:
             if (self.LLJ / (self.HL[self.VL] + 0.05)) <= 45
             else ((self.LLJ / (self.HL[self.VL] + 0.05)) / 45) - 1
         )
+
         self.GL = GL
         # Somatório das penalidades
         PENL = np.sum(GL)
@@ -2012,11 +2013,17 @@ class StructuralEvaluation:
                 - CUSTONEO: Custo do neoprene
         """
         # Custo do aço de protensão
-        CUSTOPROT = (
-            (1.085 * self.VAPV * 7810.65 * self.QDV + self.VAPL * 7857 * self.QDL)
-            * self.cap
-            * self.numpav
-        )
+        print("VAPV = ", self.VAPV)
+        if self.VAPV > 0:
+            CUSTOPROT = (
+                (1.085 * self.VAPV * 7810.65 * self.QDV + self.VAPL * 7857 * self.QDL)
+                * self.cap
+                * self.numpav
+                
+            )
+        else:
+            CUSTOPROT=0
+
 
         # Custo do aço passivo
         CUSTOAD = (
