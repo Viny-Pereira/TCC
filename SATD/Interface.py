@@ -6,8 +6,6 @@ from AG import GeneticAlgorithm
 from ImpressaoEmArquivo import FileManager
 
 
-
-
 class DesignApp:
     def __init__(self, root):
         self.root = root
@@ -65,12 +63,14 @@ class DesignApp:
         Define o ícone da janela principal usando uma imagem na pasta 'img'.
         """
         try:
-            icon_path = r"SATD\img\brasao_ufc_icon.png"  # Coloque o caminho do seu ícone aqui
+            icon_path = (
+                r"SATD\img\brasao_ufc_icon.png"  # Coloque o caminho do seu ícone aqui
+            )
             self.icon = tk.PhotoImage(file=icon_path)
             self.root.iconphoto(True, self.icon)  # Define o ícone da janela
         except Exception as e:
             messagebox.showerror("Erro", f"Erro ao carregar o ícone: {e}")
-            
+
     def validate_input(
         self,
         numpav,
@@ -264,7 +264,9 @@ class DesignApp:
 
                 # Obtém os detalhes para o indivíduo
                 individual_info = self.ga.evaluation.mostrar_resultados(count)
-                result_content.extend(individual_info)  # Adiciona ao conteúdo para o arquivo
+                result_content.extend(
+                    individual_info
+                )  # Adiciona ao conteúdo para o arquivo
 
             # Chama o FileManager para salvar o arquivo
             self.file_manager.save_file(result_content)
@@ -272,6 +274,7 @@ class DesignApp:
         except Exception as e:
             messagebox.showerror("Erro", f"Erro ao salvar os resultados: {e}")
 
+            
 
 
 if __name__ == "__main__":

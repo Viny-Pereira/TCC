@@ -103,20 +103,18 @@ class GeneticAlgorithm:
         # Validate elitism_rate
         if not (0 <= self.elitism_rate <= 1):
             raise ValueError("Elitism rate must be between 0 and 1.")
-        
+
         # Calculate elite size (at least one elite individual if rate > 0)
         elite_size = max(1, int(round(self.num_individuals * self.elitism_rate)))
-        
+
         # Sort population based on fitness
         sorted_indices = np.argsort(self.fitness)  # Ascending order for minimization
         selected_individuals = self.population[sorted_indices]
-
         # Keep elite and separate remaining
         elite = selected_individuals[:elite_size]
         remaining = selected_individuals[elite_size:]
 
         return elite, remaining
-
 
     def _crossover(self, parents):
         """
@@ -148,16 +146,17 @@ class GeneticAlgorithm:
         :param population: The current population of individuals (represented as binary arrays).
         :return: np.ndarray: The mutated population.
         """
-        # Create a copy of the population to ensure the original remains unchanged
+        # Cria uma cópia da população para garantir que a original não seja alterada
         mutated_population = population.copy()
-        for i in range(len(mutated_population)):
-            if np.random.rand() < self.mutation_rate:
-                # Generate binary mutation vector (0 or 1)
-                mutation_vector = np.random.randint(
-                    0, 2, size=mutated_population[i].shape
-                )
-                # Apply mutation
-                mutated_population[i] = mutation_vector
+
+        # Itera sobre cada indivíduo na população
+        for i in range(mutated_population.shape[0]):  # Percorre cada indivíduo
+            for j in range(mutated_population.shape[1]):  # Percorre cada gene
+                # Aplica mutação com base na taxa de mutação
+                if np.random.rand() < self.mutation_rate:
+                    mutated_population[i, j] = (
+                        1 - mutated_population[i, j]
+                    )  # Inverte o gene
 
         return mutated_population
 
@@ -188,6 +187,7 @@ class GeneticAlgorithm:
 
             # Track average fitness for each generation
             average_fitness = np.mean(self.fitness)
+
             self.fitness_history.append(average_fitness)
             print(f"Geração {generation + 1}, Aptidão Média: {average_fitness:.2f}")
 
@@ -230,11 +230,11 @@ def main():
         q=0.3,
         gpr=0.1,
         gpl=0.2,
-        numind=10,
-        elit=5,
-        maxger=10,
+        numind=700,
+        elit=3,
+        maxger=50,
         cruz_taxa=80,
-        pmut=5,
+        pmut=1,
     )
 
     # Criando a instância do algoritmo genético com os parâmetros do edifício
