@@ -4,6 +4,8 @@ import json
 from building_design import BuildingDesignParameters
 from AG import GeneticAlgorithm
 from ImpressaoEmArquivo import FileManager
+import matplotlib.pyplot as plt  # Importa matplotlib para os gráficos
+
 
 
 class DesignApp:
@@ -57,6 +59,9 @@ class DesignApp:
         tk.Button(root, text="Salvar Resultados", command=self.write_file).grid(
             row=len(labels) + 4, column=0, columnspan=2
         )
+        tk.Button(root, text="Mostrar Evolução", command=self.plot_evolution).grid(
+            row=len(labels) + 5, column=0, columnspan=2
+        )  # Novo botão para o gráfico
 
     def set_window_icon(self):
         """
@@ -274,7 +279,27 @@ class DesignApp:
         except Exception as e:
             messagebox.showerror("Erro", f"Erro ao salvar os resultados: {e}")
 
-            
+    def plot_evolution(self):
+        """
+        Plota o gráfico da evolução das gerações com base no histórico de aptidões.
+        """
+        try:
+            if not hasattr(self.ga, "fitness_history"):
+                raise ValueError("O algoritmo genético ainda não foi executado.")
+            generations = range(len(self.ga.fitness_history))
+            fitness_values = self.ga.fitness_history
+
+            plt.figure(figsize=(10, 6))
+            plt.plot(generations, fitness_values, marker="o", label="Aptidão Máxima")
+            plt.title("Evolução da Aptidão ao Longo das Gerações")
+            plt.xlabel("Geração")
+            plt.ylabel("Aptidão Máxima")
+            plt.grid(True)
+            plt.legend()
+            plt.show()
+
+        except Exception as e:
+            messagebox.showerror("Erro", f"Erro ao gerar o gráfico: {e}")
 
 
 if __name__ == "__main__":

@@ -1,4 +1,5 @@
 import numpy as np
+from math import floor
 
 
 class StructuralEvaluation:
@@ -2199,6 +2200,58 @@ class StructuralEvaluation:
             if self.GV[i] != 0:
                 print(f"GV{i}= {self.GV[i]}")
 
+    def define_drawing_parameters(self):
+        """
+        Defines the span and number of divisions for both the X and Y axes 
+        based on the long direction (dl).
+
+        :return: A tuple containing:
+                 - span_x: Span size along the X-axis
+                 - span_y: Span size along the Y-axis
+                 - divisions_x: Number of divisions along the X-axis
+                 - divisions_y: Number of divisions along the Y-axis
+        """
+        if self.DL == 0:
+            span_x = self.LLJ
+            divisions_x = self.calculate_divisions(self.LX, span_x)
+            span_y = self.LLV
+            divisions_y = self.calculate_divisions(self.LY, self.span_y)
+        else:
+            span_y = self.LLJ
+            divisions_y = self.calculate_divisions(self.LY, span_y)
+            span_x = self.LLV
+            divisions_x = self.calculate_divisions(self.LX, span_x)
+
+        return span_x, span_y, divisions_x, divisions_y
+
+    @staticmethod
+    def calculate_divisions(total_length, span):
+        """
+        Calculates the number of divisions along an axis based on the total 
+        length and the span size.
+
+        :param total_length: Total length of the axis
+        :param span: Span size
+        :return: Integer representing the number of possible divisions
+        """
+        return floor(total_length / span)
+    
+    def get_location_drawing_data(self):
+        """
+        Returns the essential data for generating the layout sketch of the pillar location, 
+        including the LP parameter (pillar width), the direction of the primary axis (DL), 
+        the base of the beam (BV), and the division parameters for the grid.
+
+        :return: A tuple containing:
+                - DL: Direction of the primary axis
+                - BV: Base of the beam
+                - LP: Width of the pillar
+                - span_x: Spacing between pillars along the X-axis
+                - span_y: Spacing between pillars along the Y-axis
+                - divisions_x: Number of pillar spans along the X-axis
+                - divisions_y: Number of pillar spans along the Y-axis
+        """
+        return self.DL, self.BV, self.LP, *self.define_drawing_parameters()
 
 def main():
     # Parâmetros de entrada
