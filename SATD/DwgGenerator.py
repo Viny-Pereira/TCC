@@ -380,7 +380,7 @@ class PavementDesign:
 
 
 class TBeamDrawingDWG:
-    def __init__(self, bw, hl, hv, file_name="viga_T_invertido.dxf"):
+    def __init__(self, bw, hl, hv, Na, Nb, file_name="viga_T_invertido.dxf"):
         """
         Inicializa a classe com as dimensões da viga T invertido e o nome do arquivo DXF.
 
@@ -388,12 +388,16 @@ class TBeamDrawingDWG:
         :param hl: Altura da laje (cm)
         :param hv: Altura inferior da viga (cm)
         :param file_name: Nome do arquivo DXF (default: 'viga_T_invertido.dxf')
+        :param Na: Quantidade de cabos na primeira camada
+        :param Nb: Quantidade de cabos na segunda camada
         """
         self.bw = bw
         self.hl = hl
         self.hv = hv
         self.base = 15 + bw + 15  # largura total da base da viga em T invertido
         self.height = hv + (hl - 5)  # altura total da viga
+        self.Na = Na
+        self.Nb = Nb
         self.file_name = file_name  # Nome do arquivo DXF a ser gerado
 
     def create_dxf(self):
@@ -405,6 +409,9 @@ class TBeamDrawingDWG:
 
         # Criando a polilinha da viga
         self._add_viga_polyline(msp)
+
+        # Adicionando cabos de protensao
+        self._add_pretension_cables(msp)
 
         # Adicionando as cotas
         self._add_cotas(msp)
@@ -549,6 +556,40 @@ class TBeamDrawingDWG:
                 "color": 2,  # Yellow
             },
         )
+    def _add_pretension_cables(self, msp):
+        """
+        Adiciona a representação dos cabos de protensão na base da viga em duas camadas.
+
+        :param msp: ModelSpace do documento DXF
+        """
+        # Primeira camada
+        if self.Na > 0:
+            self._add_cable_layer(msp, self.Na, cable_height=5, layer_name="Pretensao1")
+
+        # Segunda camada
+        if self.Nb > 0:
+            self._add_cable_layer(
+                msp, self.Nb, cable_height=10, layer_name="Pretensao2"
+            )
+
+    def _add_cable_layer(self, msp, num_cables, cable_height, layer_name):
+        """
+        Adiciona uma camada de cabos de protensão no desenho DXF.
+
+        :param msp: ModelSpace do documento DXF
+        :param num_cables: Número de cabos na camada
+        :param cable_height: Altura da camada acima da base
+        :param layer_name: Nome do layer para os cabos
+        """
+        distance = self.base / (num_cables + 1)  # Distância entre os cabos
+        for i in range(1, num_cables + 1):
+            x_position = distance * i
+            msp.add_circle(
+                (x_position, cable_height),  # Posição da bolinha
+                radius=0.5,  # Tamanho da bolinha (cabo de protensão)
+                dxfattribs={"layer": layer_name, "color": 1},  # Cor vermelha
+            )
+
 
 
 
@@ -579,7 +620,8 @@ if __name__ == "__main__":
     bw = 100  # Largura da alma (exemplo)
     hl = 50  # Altura da laje (exemplo)
     hv = 75  # Altura inferior da viga (exemplo)
-
-    viga = TBeamDrawingDWG(bw, hl, hv)
+    # Número de cabos por camada
+    Na = 4  # Número de cabos na primeira camada
+    Nb = 3  # Número de cabos na segunda camada
+    viga = TBeamDrawingDWG(bw, hl, hv, Na, Nb)
     viga.create_dxf()
-
