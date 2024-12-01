@@ -1,4 +1,5 @@
 import ezdxf
+import numpy as np
 
 
 class PavementDesign:
@@ -378,6 +379,179 @@ class PavementDesign:
         print(f"File '{self.filename}' saved successfully!")
 
 
+class TBeamDrawingDWG:
+    def __init__(self, bw, hl, hv, file_name="viga_T_invertido.dxf"):
+        """
+        Inicializa a classe com as dimensões da viga T invertido e o nome do arquivo DXF.
+
+        :param bw: Largura da alma (cm)
+        :param hl: Altura da laje (cm)
+        :param hv: Altura inferior da viga (cm)
+        :param file_name: Nome do arquivo DXF (default: 'viga_T_invertido.dxf')
+        """
+        self.bw = bw
+        self.hl = hl
+        self.hv = hv
+        self.base = 15 + bw + 15  # largura total da base da viga em T invertido
+        self.height = hv + (hl - 5)  # altura total da viga
+        self.file_name = file_name  # Nome do arquivo DXF a ser gerado
+
+    def create_dxf(self):
+        """
+        Cria o arquivo DXF com a viga T invertido e as cotas.
+        """
+        doc = self._create_dxf_document()
+        msp = doc.modelspace()
+
+        # Criando a polilinha da viga
+        self._add_viga_polyline(msp)
+
+        # Adicionando as cotas
+        self._add_cotas(msp)
+
+        # Salvando o arquivo DXF
+        doc.saveas(self.file_name)
+        print(f"Arquivo DXF {self.file_name} gerado com sucesso!")
+
+    def _create_dxf_document(self):
+        """
+        Cria e retorna um novo documento DXF.
+        """
+        doc = ezdxf.new("R2000")
+        doc.layers.new(name="Viga_T", dxfattribs={"color": 7})  # Cor 7 (branco)
+        return doc
+
+    def _add_viga_polyline(self, msp):
+        """
+        Adiciona a polilinha que define a geometria da viga T invertido no desenho.
+
+        :param msp: ModelSpace do documento DXF
+        """
+        points = np.array(
+            [
+                [0, 0],  # ponto (0,0)
+                [self.base, 0],  # ponto (30+bw, 0)
+                [self.base, self.hv],  # ponto (30+bw, hv)
+                [15 + self.bw, self.hv],  # ponto (15+bw, hv)
+                [15 + self.bw, self.hv + self.hl - 5],  # ponto (15+bw, hv+hl-5)
+                [15, self.hv + self.hl - 5],  # ponto (15, hv+hl-5)
+                [15, self.hv],  # ponto (15, hv)
+                [0, self.hv],  # ponto (0, hv)
+            ]
+        )
+        msp.add_lwpolyline(points, close=True)  # Fechando o polígono
+
+    def _add_cotas(self, msp):
+        """
+        Adiciona as cotas horizontais e verticais no desenho DXF.
+
+        :param msp: ModelSpace do documento DXF
+        """
+        self._add_cota_bw(msp)
+        self._add_cota_base(msp)
+        self._add_cota_hv(msp)
+        self._add_cota_hl(msp)
+
+    def _add_cota_bw(self, msp):
+        """
+        Adiciona a cota da largura da alma (Bw).
+
+        :param msp: ModelSpace do documento DXF
+        """
+        y_offset = self.height + 10  # Posição vertical para a cota Bw
+        self._add_dimension(msp, (15, y_offset), (15 + self.bw, y_offset), self.bw, 0)
+
+    def _add_cota_base(self, msp):
+        """
+        Adiciona a cota da largura da base.
+
+        :param msp: ModelSpace do documento DXF
+        """
+        y_offset = -10  # Posição vertical para a cota da base
+        self._add_dimension(msp, (0, y_offset), (self.base, y_offset), self.base, 0)
+
+    def _add_cota_hv(self, msp):
+        """
+        Adiciona a cota da altura inferior da viga (Hv).
+
+        :param msp: ModelSpace do documento DXF
+        """
+        x_offset = self.base + 10  # Posição horizontal para a cota Hv
+        self._add_dimension(msp, (x_offset, 0), (x_offset, self.hv), self.hv, 1)
+
+    def _add_cota_hl(self, msp):
+        """
+        Adiciona a cota da altura da laje (Hl - 5).
+
+        :param msp: ModelSpace do documento DXF
+        """
+        x_offset = self.base + 10  # Posição horizontal para a cota Hl
+        self._add_dimension(
+            msp, (x_offset, self.hv), (x_offset, self.height), self.height, 1
+        )
+
+    def _add_dimension(self, msp, start_point, end_point, value, sentido):
+        """
+        Adiciona uma linha de cota no desenho.
+
+        :param msp: ModelSpace do documento DXF
+        :param start_point: Ponto inicial da linha de cota
+        :param end_point: Ponto final da linha de cota
+        :param text_position: Posição do texto da cota
+        :param value: Valor da cota a ser exibido
+        """
+        x_mean = (start_point[0] + end_point[0]) / 2
+        y_mean = (start_point[1] + end_point[1]) / 2
+        if sentido:
+            y = y_mean
+            x = start_point[0]
+            rotation = 90
+            msp.add_line(
+                (start_point[0] - 5, start_point[1]),
+                (start_point[0] + 5, start_point[1]),
+                dxfattribs={"color": 2},
+            )
+            msp.add_line(
+                (end_point[0] - 5, end_point[1]),
+                (end_point[0] + 5, end_point[1]),
+                dxfattribs={"color": 2},
+            )
+        else:
+            x = x_mean
+            y = start_point[1]
+            rotation = 0
+            # Adiciona os marcadores de cota (ticks)
+            msp.add_line(
+                (start_point[0], start_point[1] - 5),
+                (start_point[0], start_point[1] + 5),
+                dxfattribs={"color": 2},
+            )
+            msp.add_line(
+                (end_point[0], end_point[1] - 5),
+                (end_point[0], end_point[1] + 5),
+                dxfattribs={"color": 2},
+            )
+
+        text_position = (x, y)
+
+        # Adiciona a linha de cota
+        msp.add_line(start_point, end_point, dxfattribs={"color": 2})
+
+        # Adiciona o texto da cota
+        msp.add_text(
+            str(value),
+            dxfattribs={
+                "height": 2.5,
+                "rotation": rotation,
+                "insert": text_position,
+                "halign": 0.5,
+                "valign": 0.5,
+                "color": 2,  # Yellow
+            },
+        )
+
+
+
 # Example Usage
 if __name__ == "__main__":
     plant = PavementDesign(
@@ -400,3 +574,12 @@ if __name__ == "__main__":
     plant.label_secondary_beams()
 
     plant.save()
+
+    # Exemplo de uso
+    bw = 100  # Largura da alma (exemplo)
+    hl = 50  # Altura da laje (exemplo)
+    hv = 75  # Altura inferior da viga (exemplo)
+
+    viga = TBeamDrawingDWG(bw, hl, hv)
+    viga.create_dxf()
+
