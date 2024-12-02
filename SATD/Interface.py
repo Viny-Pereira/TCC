@@ -5,7 +5,7 @@ from building_design import BuildingDesignParameters
 from AG import GeneticAlgorithm
 from ImpressaoEmArquivo import FileManager
 import matplotlib.pyplot as plt  # Importa matplotlib para os gráficos
-
+from DwgGenerator import PavementDesign, TBeamDrawingDWG
 
 
 class DesignApp:
@@ -61,7 +61,10 @@ class DesignApp:
         )
         tk.Button(root, text="Mostrar Evolução", command=self.plot_evolution).grid(
             row=len(labels) + 5, column=0, columnspan=2
-        )  # Novo botão para o gráfico
+        )
+        tk.Button(root, text="Generate DWG", command=self.generate_dwg).grid(
+            row=len(labels) + 6, column=0, columnspan=2
+        )
 
     def set_window_icon(self):
         """
@@ -238,13 +241,13 @@ class DesignApp:
             self.ga.evolve()
 
             # Obtendo o melhor indivíduo
-            best_individual, best_fitness = self.ga.get_best_individual()
+            self.best_individual, best_fitness = self.ga.get_best_individual()
 
             self.population = self.ga.population
 
             messagebox.showinfo(
                 "Resultado do Algoritmo Genético",
-                f"Melhor indivíduo: {best_individual}\nAptidão: {best_fitness:.2f}",
+                f"Melhor indivíduo: {self.best_individual}\nAptidão: {best_fitness:.2f}",
             )
 
         except Exception as e:
@@ -278,6 +281,59 @@ class DesignApp:
 
         except Exception as e:
             messagebox.showerror("Erro", f"Erro ao salvar os resultados: {e}")
+
+    def generate_dwg(self):
+        """
+        Generates DWG files for the structural design, including a labeled floor plan
+        and a T-beam cross-section drawing. Uses the best individual from the genetic
+        algorithm's results to initialize design parameters.
+
+        Steps:
+            1. Retrieves drawing data from the genetic algorithm's evaluation for the best individual.
+            2. Generates a labeled floor plan (DXF file) with beam orientations, dimensions,
+            and layout information using the `PavementDesign` class.
+            3. Creates a T-beam cross-section drawing (DXF file) with dimensions and node
+            information using the `TBeamDrawingDWG` class.
+
+        Raises:
+            Exception: If there is an issue during the drawing generation process.
+        """
+        try:
+            # Initialize the best individual for evaluation
+            self.ga.evaluation.initialize_individual(self.best_individual)
+
+            # Get parameters for floor plan and T-beam drawings
+            DL, NA, NB, BV, HV, HL, LP, span_x, span_y, divisions_x, divisions_y = (
+                self.ga.evaluation.get_location_drawing_data()
+            )
+            # Ajuste de unidades
+            BV = BV * 100
+            HV = HV * 100
+            HL = HL * 100
+            LP = LP * 100
+            span_x = span_x * 100
+            span_y = span_y * 100
+            # Generate floor plan with labels
+            plant = PavementDesign(
+                filename="planta_com_labels.dxf",
+                beam_orientation=DL,
+                beam_width=BV,
+                beam_height=HV,
+                pillar_size=LP,
+                span_x=span_x,
+                span_y=span_y,
+                num_divisions_x=divisions_x,
+                num_divisions_y=divisions_y,
+            )
+            plant.generate_drawing()
+
+            # Generate T-beam cross-section drawing
+            tbeam = TBeamDrawingDWG(BV, HL, HV, NA, NB)
+            tbeam.generate_drawing()
+
+            messagebox.showinfo("Success", "DWG files generated successfully!")
+        except Exception as e:
+            messagebox.showerror("Error", f"Error generating DWG files: {e}")
 
     def plot_evolution(self):
         """

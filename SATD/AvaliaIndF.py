@@ -2188,8 +2188,7 @@ class StructuralEvaluation:
         resultados.append(f"QDL= {self.QDL}")
 
         return "\n".join(resultados)
-    
-    
+
     def calculate_restrictions_final(self):
         # Verificação das restrições
         for i in range(17):
@@ -2202,7 +2201,7 @@ class StructuralEvaluation:
 
     def define_drawing_parameters(self):
         """
-        Defines the span and number of divisions for both the X and Y axes 
+        Defines the span and number of divisions for both the X and Y axes
         based on the long direction (dl).
 
         :return: A tuple containing:
@@ -2215,7 +2214,7 @@ class StructuralEvaluation:
             span_x = self.LLJ
             divisions_x = self.calculate_divisions(self.LX, span_x)
             span_y = self.LLV
-            divisions_y = self.calculate_divisions(self.LY, self.span_y)
+            divisions_y = self.calculate_divisions(self.LY, span_y)
         else:
             span_y = self.LLJ
             divisions_y = self.calculate_divisions(self.LY, span_y)
@@ -2227,7 +2226,7 @@ class StructuralEvaluation:
     @staticmethod
     def calculate_divisions(total_length, span):
         """
-        Calculates the number of divisions along an axis based on the total 
+        Calculates the number of divisions along an axis based on the total
         length and the span size.
 
         :param total_length: Total length of the axis
@@ -2235,11 +2234,11 @@ class StructuralEvaluation:
         :return: Integer representing the number of possible divisions
         """
         return floor(total_length / span)
-    
+
     def get_location_drawing_data(self):
         """
-        Returns the essential data for generating the layout sketch of the pillar location, 
-        including the LP parameter (pillar width), the direction of the primary axis (DL), 
+        Returns the essential data for generating the layout sketch of the pillar location,
+        including the LP parameter (pillar width), the direction of the primary axis (DL),
         the base of the beam (BV), and the division parameters for the grid.
 
         :return: A tuple containing:
@@ -2251,7 +2250,21 @@ class StructuralEvaluation:
                 - divisions_x: Number of pillar spans along the X-axis
                 - divisions_y: Number of pillar spans along the Y-axis
         """
-        return self.DL, self.BV, self.LP, *self.define_drawing_parameters()
+        span_x, span_y, divisions_x, divisions_y = self.define_drawing_parameters()
+        return (
+            self.DL,
+            self.NA[self.ANA],
+            self.NB[self.ANB],
+            self.BV[self.VV],
+            self.HV[self.VV],
+            self.HL[self.VL],
+            self.LP,
+            span_x,
+            span_y,
+            divisions_x,
+            divisions_y,
+        )
+
 
 def main():
     # Parâmetros de entrada

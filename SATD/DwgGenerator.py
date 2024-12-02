@@ -108,17 +108,41 @@ class PavementDesign:
                 x1, y1 = group[i]
                 x2, y2 = group[i + 1]
                 if self.dl == 1:  # Horizontal beams
-                    x1 += half_pillars_dimension
-                    x2 -= half_pillars_dimension
+                    if self.bv <= self.pillar_dimension:
+                        x1 += half_pillars_dimension
+                        x2 -= half_pillars_dimension
+                        x1up = x1down = x1
+                        x2up = x2down = x2
+                    else:
+                        x2up = x2down = x2
+                        x1up = x1down = x1
+                        if x1==0:
+                            x1up +=half_bv 
+                            x1down +=half_bv
+                            if y1==0:
+                                x1down -=2*half_bv
+                            elif y1 == self.divisions_y*self.span_y:
+                                x1up -=2*half_bv
+                        elif x2 == self.divisions_x*self.span_x:
+                            x2up -=half_bv 
+                            x2down -=half_bv
+                            if y1==0:
+                                x2down +=2*half_bv
+                            elif y1 == self.divisions_y*self.span_y:
+                                x2up +=2*half_bv
+
+
                     self.msp.add_line(
-                        (x1, y1 - half_bv), (x2, y2 - half_bv), dxfattribs={"color": 3}
+                        (x1down, y1 - half_bv), (x2down, y2 - half_bv), dxfattribs={"color": 3}
                     )
                     self.msp.add_line(
-                        (x1, y1 + half_bv), (x2, y2 + half_bv), dxfattribs={"color": 3}
+                        (x1up, y1 + half_bv), (x2up, y2 + half_bv), dxfattribs={"color": 3}
                     )
                 else:  # Vertical beams
-                    y1 += half_pillars_dimension
-                    y2 -= half_pillars_dimension
+                    if self.bv <= self.pillar_dimension:
+                        y1 += half_pillars_dimension
+                        y2 -= half_pillars_dimension
+
                     self.msp.add_line(
                         (x1 - half_bv, y1), (x2 - half_bv, y2), dxfattribs={"color": 3}
                     )
@@ -150,8 +174,9 @@ class PavementDesign:
                 x1, y1 = group[i]
                 x2, y2 = group[i + 1]
                 if self.dl == 0:  # Horizontal secondary beams
-                    x1 += half_pillars_dimension
-                    x2 -= half_pillars_dimension
+                    if self.bv <= self.pillar_dimension:
+                        x1 += half_pillars_dimension
+                        x2 -= half_pillars_dimension
                     self.msp.add_line(
                         (x1, y1 - half_bv), (x2, y2 - half_bv), dxfattribs={"color": 3}
                     )
@@ -159,13 +184,34 @@ class PavementDesign:
                         (x1, y1 + half_bv), (x2, y2 + half_bv), dxfattribs={"color": 3}
                     )
                 else:  # Vertical secondary beams
-                    y1 += half_pillars_dimension
-                    y2 -= half_pillars_dimension
+                    if self.bv <= self.pillar_dimension:
+                        y1 += half_pillars_dimension
+                        y2 -= half_pillars_dimension
+                        y1left = y1right = y1
+                        y2left = y2right = y2
+                    else:
+                        y1left = y1right = y1
+                        y2left = y2right = y2
+                        if y1==0:
+                            y1left +=half_bv 
+                            y1right +=half_bv
+                            if x1==0:
+                                y1left -=2*half_bv
+                            elif x2 == self.divisions_x*self.span_x:
+                                y1right -=2*half_bv
+                        elif y2 == self.divisions_y*self.span_y:
+                            y2left -=half_bv 
+                            y2right -=half_bv
+                            if x1==0:
+                                y2left +=2*half_bv
+                            elif x2 == self.divisions_x*self.span_x:
+                                y2right +=2*half_bv
+
                     self.msp.add_line(
-                        (x1 - half_bv, y1), (x2 - half_bv, y2), dxfattribs={"color": 3}
+                        (x1 - half_bv, y1left), (x2 - half_bv, y2left), dxfattribs={"color": 3}
                     )
                     self.msp.add_line(
-                        (x1 + half_bv, y1), (x2 + half_bv, y2), dxfattribs={"color": 3}
+                        (x1 + half_bv, y1right), (x2 + half_bv, y2right), dxfattribs={"color": 3}
                     )
 
     def add_dimension_lines(self):
@@ -371,6 +417,36 @@ class PavementDesign:
                 )
                 label_count += 1
 
+    def generate_drawing(self):
+        """
+        Generates the structural drawing by sequentially executing key steps.
+
+        This method compiles the drawing by performing the following operations:
+        1. Places the pillars in their designated locations.
+        2. Adds the primary beams to the drawing.
+        3. Adds the secondary beams to the drawing.
+        4. Inserts external dimension lines for better understanding of the layout.
+        5. Labels the pillars with unique identifiers for clarity.
+        6. Labels the primary beams with appropriate annotations.
+        7. Labels the secondary beams with appropriate annotations.
+        8. Saves the generated drawing to a predefined file format.
+
+        This function ensures a comprehensive and labeled structural drawing
+        for further use or presentation.
+
+        Returns:
+            None
+        """
+        self.place_pillars()
+        self.add_primary_beams()
+        self.add_secondary_beams()
+        self.add_dimension_lines()  # Adiciona cotagem externa
+        self.add_pillar_labels()  # Adiciona rótulos aos pilares
+        self.label_beams()  # Adiciona rótulos aos pilares
+        self.label_secondary_beams()
+
+        self.save()
+
     def save(self):
         """
         Saves the DXF file with the specified name.
@@ -400,7 +476,7 @@ class TBeamDrawingDWG:
         self.Nb = Nb
         self.file_name = file_name  # Nome do arquivo DXF a ser gerado
 
-    def create_dxf(self):
+    def generate_drawing(self):
         """
         Cria o arquivo DXF com a viga T invertido e as cotas.
         """
@@ -417,8 +493,14 @@ class TBeamDrawingDWG:
         self._add_cotas(msp)
 
         # Salvando o arquivo DXF
+        self.save(doc)
+
+    def save(self, doc):
+        """
+        Saves the DXF file with the specified name.
+        """
         doc.saveas(self.file_name)
-        print(f"Arquivo DXF {self.file_name} gerado com sucesso!")
+        print(f"File '{self.file_name}' saved successfully!")
 
     def _create_dxf_document(self):
         """
@@ -494,7 +576,7 @@ class TBeamDrawingDWG:
         """
         x_offset = self.base + 10  # Posição horizontal para a cota Hl
         self._add_dimension(
-            msp, (x_offset, self.hv), (x_offset, self.height), self.height, 1
+            msp, (x_offset, self.hv), (x_offset, self.height), (self.hl - 5), 1
         )
 
     def _add_dimension(self, msp, start_point, end_point, value, sentido):
@@ -556,6 +638,7 @@ class TBeamDrawingDWG:
                 "color": 2,  # Yellow
             },
         )
+
     def _add_pretension_cables(self, msp):
         """
         Adiciona a representação dos cabos de protensão na base da viga em duas camadas.
@@ -591,14 +674,12 @@ class TBeamDrawingDWG:
             )
 
 
-
-
 # Example Usage
 if __name__ == "__main__":
     plant = PavementDesign(
         filename="planta_com_labels.dxf",
         beam_orientation=1,
-        beam_width=40,
+        beam_width=70,
         beam_height=60,
         pillar_size=50,
         span_x=775,
@@ -606,22 +687,15 @@ if __name__ == "__main__":
         num_divisions_x=4,
         num_divisions_y=3,
     )
-    plant.place_pillars()
-    plant.add_primary_beams()
-    plant.add_secondary_beams()
-    plant.add_dimension_lines()  # Adiciona cotagem externa
-    plant.add_pillar_labels()  # Adiciona rótulos aos pilares
-    plant.label_beams()  # Adiciona rótulos aos pilares
-    plant.label_secondary_beams()
 
-    plant.save()
+    plant.generate_drawing()
 
     # Exemplo de uso
-    bw = 100  # Largura da alma (exemplo)
-    hl = 50  # Altura da laje (exemplo)
-    hv = 75  # Altura inferior da viga (exemplo)
+    bw = 60  # Largura da alma (exemplo)
+    hl = 20  # Altura da laje (exemplo)
+    hv = 20  # Altura inferior da viga (exemplo)
     # Número de cabos por camada
-    Na = 4  # Número de cabos na primeira camada
-    Nb = 3  # Número de cabos na segunda camada
+    Na = 10  # Número de cabos na primeira camada
+    Nb = 4  # Número de cabos na segunda camada
     viga = TBeamDrawingDWG(bw, hl, hv, Na, Nb)
-    viga.create_dxf()
+    viga.generate_drawing()
