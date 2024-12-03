@@ -290,7 +290,7 @@ class PavementDesign:
                             "height": 40,
                             "halign": 0.5,
                             "valign": 0.5,
-                            "insert": (x + self.span_x / 2 - 50, y_offset + 30),
+                            "insert": (x + self.span_x*.45, y_offset + 30),
                             "color": 2,  # Yellow
                         },  # Horizontal alignment
                     )
@@ -311,7 +311,7 @@ class PavementDesign:
                             "halign": 0.5,
                             "valign": 0.5,
                             "rotation": 90,
-                            "insert": (x_offset - 30, y + self.span_y / 2 - 50),
+                            "insert": (x_offset - 30, y + self.span_y *.45),
                             "color": 2,  # Yellow
                         },  # Vertical alignment
                     )
@@ -368,33 +368,47 @@ class PavementDesign:
             pillar_number += 1  # Increment the pillar number for the next pillar
 
     def label_beams(self):
+        if self.dl:
+            self.label_primary_beams()
+            self.label_secondary_beams()
+        else:
+            self.label_secondary_beams()
+            self.label_primary_beams()
+
+    def label_primary_beams(self):
         """Adds labels to the beams with numbering and orientation."""
         coordinates = self.generate_coordinates()
         axis = 1 if self.dl == 0 else 0
-        coordinates.sort(key=lambda c: c[axis])
-
+        if self.dl:
+            self.label_count = 1  # Start numbering from V1
+            coordinates.sort(
+                key=lambda coord: (-coord[1], coord[0])
+            )
+        else:
+            coordinates.sort(
+                key=lambda coord: (coord[0], -coord[1])
+            )
         grouped = {}
         for coord in coordinates:
             key = coord[1 - axis]
             grouped.setdefault(key, []).append(coord)
 
-        label_count = 1  # Start numbering from V1
         for group in grouped.values():
-            group.sort(key=lambda c: c[axis])
+            group.sort(key=lambda c: c[axis], reverse=(not self.dl))
             for i in range(len(group) - 1):
                 x1, y1 = group[i]
                 x2, y2 = group[i + 1]
                 x_center = (x1 + x2) / 2
                 y_center = (y1 + y2) / 2
 
-                label_text = f"{self.bv}x{self.hv}"
+                label_text = f"V{self.label_count} {self.bv}x{self.hv}"
                 if self.dl == 0:
                     rotation = 90
-                    y = y_center
+                    y = y_center-self.span_y*0.1
                     x = x2 - self.bv / 2
                 else:
                     y = y2 + self.bv / 2
-                    x = x_center
+                    x = x_center-self.span_x*0.1
                     rotation = 0
 
                 self.msp.add_text(
@@ -408,14 +422,20 @@ class PavementDesign:
                         "rotation": rotation,
                     },
                 )
-                label_count += 1
+                self.label_count += 1
 
     def label_secondary_beams(self):
         """Adds labels to the secondary beams with numbering and orientation."""
         coordinates = self.generate_coordinates()
         half_bv = self.bv / 2
         axis = 0 if self.dl == 0 else 1
-        coordinates.sort(key=lambda c: (c[1 - axis], c[axis]))
+        # Ordena as coordenadas com base no critério de 'dl'
+        if self.dl == 0:  # Para vigas horizontais
+            # Ordena primeiro por Y (de cima para baixo) e depois por X (da esquerda para direita)
+            coordinates.sort(key=lambda c: (c[0], -c[1]))
+        else:  # Para vigas verticais
+            # Ordena primeiro por X (da esquerda para direita) e depois por Y (de cima para baixo)
+            coordinates.sort(key=lambda c: (-c[1], c[0]))
 
         grouped = {}
         for coord in coordinates:
@@ -427,23 +447,25 @@ class PavementDesign:
             groups[0],
             groups[-1],
         ]  # Apenas as primeiras e últimas linhas/colunas
-        label_count = 1  # Começar a numeração de S1
+        if self.dl==0:
+            self.label_count = 1  # Começar a numeração de S1
+
 
         for group in target_groups:
-            group.sort(key=lambda c: c[axis])
+            group.sort(key=lambda c: c[axis], reverse=(self.dl))
             for i in range(len(group) - 1):
                 x1, y1 = group[i]
                 x2, y2 = group[i + 1]
                 x_center = (x1 + x2) / 2
                 y_center = (y1 + y2) / 2
 
-                label_text = f"{self.bv}x{self.hv}"
+                label_text = f"V{self.label_count} {self.bv}x{self.hv}"
                 if self.dl == 0:  # Para vigas horizontais secundárias
                     rotation = 0
                     y = y2 + half_bv
-                    x = x_center
+                    x = x_center-self.span_x*0.1
                 else:  # Para vigas verticais secundárias
-                    y = y_center
+                    y = y_center-self.span_y*0.1
                     x = x2 - half_bv
                     rotation = 90
 
@@ -459,7 +481,7 @@ class PavementDesign:
                         "rotation": rotation,
                     },
                 )
-                label_count += 1
+                self.label_count += 1
 
     def generate_drawing(self):
         """
@@ -487,7 +509,6 @@ class PavementDesign:
         self.add_dimension_lines()  # Adiciona cotagem externa
         self.add_pillar_labels()  # Adiciona rótulos aos pilares
         self.label_beams()  # Adiciona rótulos aos pilares
-        self.label_secondary_beams()
 
         self.save()
 
@@ -636,7 +657,7 @@ class TBeamDrawingDWG:
         x_mean = (start_point[0] + end_point[0]) / 2
         y_mean = (start_point[1] + end_point[1]) / 2
         if sentido:
-            y = y_mean
+            y = y_mean*.95
             x = start_point[0]
             rotation = 90
             msp.add_line(
@@ -650,7 +671,7 @@ class TBeamDrawingDWG:
                 dxfattribs={"color": 2},
             )
         else:
-            x = x_mean
+            x = x_mean*.95
             y = start_point[1]
             rotation = 0
             # Adiciona os marcadores de cota (ticks)
@@ -722,7 +743,7 @@ class TBeamDrawingDWG:
 if __name__ == "__main__":
     plant = PavementDesign(
         filename="planta_com_labels.dxf",
-        beam_orientation=1,
+        beam_orientation=0,
         beam_width=70,
         beam_height=60,
         pillar_size=50,
