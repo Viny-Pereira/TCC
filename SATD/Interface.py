@@ -307,10 +307,10 @@ class DesignApp:
                 self.ga.evaluation.get_location_drawing_data()
             )
             # Ajuste de unidades
-            BV = BV * 100
-            HV = HV * 100
-            HL = HL * 100
-            LP = LP * 100
+            BV = int(BV * 100)
+            HV = int(HV * 100)
+            HL = int(HL * 100)
+            LP = int(LP * 100)
             span_x = span_x * 100
             span_y = span_y * 100
             # Generate floor plan with labels

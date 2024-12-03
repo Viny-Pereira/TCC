@@ -87,6 +87,81 @@ class PavementDesign:
         for coord in coordinates:
             self.create_pillar(*coord)
 
+    def horizontal_beam(self, x1, x2, y1, y2):
+        """
+        Adjusts the coordinates for horizontal beams.
+
+        Parameters:
+            x1, x2: float - Start and end x-coordinates.
+            y1, y2: float - Start and end y-coordinates.
+
+        Returns:
+            Tuple[float, float, float, float] - Adjusted coordinates (x1up, x1down, x2up, x2down).
+        """
+        half_bv = self.bv / 2
+        half_pillars_dimension = self.pillar_dimension / 2
+
+        if self.bv <= self.pillar_dimension:
+            x1 += half_pillars_dimension
+            x2 -= half_pillars_dimension
+            x1up = x1down = x1
+            x2up = x2down = x2
+        else:
+            x2up = x2down = x2
+            x1up = x1down = x1
+            if x1 == 0:
+                x1up += half_bv
+                x1down += half_bv
+                if y1 == 0:
+                    x1down -= 2 * half_bv
+                elif y1 == self.divisions_y * self.span_y:
+                    x1up -= 2 * half_bv
+            elif x2 == self.divisions_x * self.span_x:
+                x2up -= half_bv
+                x2down -= half_bv
+                if y1 == 0:
+                    x2down += 2 * half_bv
+                elif y1 == self.divisions_y * self.span_y:
+                    x2up += 2 * half_bv
+        return x1up, x1down, x2up, x2down
+
+    def vertical_beam(self, x1, x2, y1, y2):
+        """
+        Adjusts the coordinates for vertical beams.
+
+        Parameters:
+            x1, x2: float - Start and end x-coordinates.
+            y1, y2: float - Start and end y-coordinates.
+
+        Returns:
+            Tuple[float, float, float, float] - Adjusted coordinates (y1left, y1right, y2left, y2right).
+        """
+        half_bv = self.bv / 2
+        half_pillars_dimension = self.pillar_dimension / 2
+        if self.bv <= self.pillar_dimension:
+            y1 += half_pillars_dimension
+            y2 -= half_pillars_dimension
+            y1left = y1right = y1
+            y2left = y2right = y2
+        else:
+            y1left = y1right = y1
+            y2left = y2right = y2
+            if y1 == 0:
+                y1left += half_bv
+                y1right += half_bv
+                if x1 == 0:
+                    y1left -= 2 * half_bv
+                elif x2 == self.divisions_x * self.span_x:
+                    y1right -= 2 * half_bv
+            elif y2 == self.divisions_y * self.span_y:
+                y2left -= half_bv
+                y2right -= half_bv
+                if x1 == 0:
+                    y2left += 2 * half_bv
+                elif x2 == self.divisions_x * self.span_x:
+                    y2right += 2 * half_bv
+        return y1left, y1right, y2left, y2right
+
     def add_primary_beams(self):
         """
         Adds primary beams to the drawing, connecting pillars along the specified direction.
@@ -95,7 +170,6 @@ class PavementDesign:
         half_bv = self.bv / 2
         axis = 1 if self.dl == 0 else 0
         coordinates.sort(key=lambda c: c[axis])
-        half_pillars_dimension = self.pillar_dimension / 2
 
         grouped = {}
         for coord in coordinates:
@@ -108,46 +182,30 @@ class PavementDesign:
                 x1, y1 = group[i]
                 x2, y2 = group[i + 1]
                 if self.dl == 1:  # Horizontal beams
-                    if self.bv <= self.pillar_dimension:
-                        x1 += half_pillars_dimension
-                        x2 -= half_pillars_dimension
-                        x1up = x1down = x1
-                        x2up = x2down = x2
-                    else:
-                        x2up = x2down = x2
-                        x1up = x1down = x1
-                        if x1==0:
-                            x1up +=half_bv 
-                            x1down +=half_bv
-                            if y1==0:
-                                x1down -=2*half_bv
-                            elif y1 == self.divisions_y*self.span_y:
-                                x1up -=2*half_bv
-                        elif x2 == self.divisions_x*self.span_x:
-                            x2up -=half_bv 
-                            x2down -=half_bv
-                            if y1==0:
-                                x2down +=2*half_bv
-                            elif y1 == self.divisions_y*self.span_y:
-                                x2up +=2*half_bv
-
-
+                    x1up, x1down, x2up, x2down = self.horizontal_beam(x1, x2, y1, y2)
                     self.msp.add_line(
-                        (x1down, y1 - half_bv), (x2down, y2 - half_bv), dxfattribs={"color": 3}
+                        (x1down, y1 - half_bv),
+                        (x2down, y2 - half_bv),
+                        dxfattribs={"color": 3},
                     )
                     self.msp.add_line(
-                        (x1up, y1 + half_bv), (x2up, y2 + half_bv), dxfattribs={"color": 3}
+                        (x1up, y1 + half_bv),
+                        (x2up, y2 + half_bv),
+                        dxfattribs={"color": 3},
                     )
                 else:  # Vertical beams
-                    if self.bv <= self.pillar_dimension:
-                        y1 += half_pillars_dimension
-                        y2 -= half_pillars_dimension
-
-                    self.msp.add_line(
-                        (x1 - half_bv, y1), (x2 - half_bv, y2), dxfattribs={"color": 3}
+                    y1left, y1right, y2left, y2right = self.vertical_beam(
+                        x1, x2, y1, y2
                     )
                     self.msp.add_line(
-                        (x1 + half_bv, y1), (x2 + half_bv, y2), dxfattribs={"color": 3}
+                        (x1 - half_bv, y1left),
+                        (x2 - half_bv, y2left),
+                        dxfattribs={"color": 3},
+                    )
+                    self.msp.add_line(
+                        (x1 + half_bv, y1right),
+                        (x2 + half_bv, y2right),
+                        dxfattribs={"color": 3},
                     )
 
     def add_secondary_beams(self):
@@ -166,7 +224,6 @@ class PavementDesign:
 
         groups = list(grouped.values())
         target_groups = [groups[0], groups[-1]]
-        half_pillars_dimension = self.pillar_dimension / 2
 
         for group in target_groups:
             group.sort(key=lambda c: c[axis])
@@ -174,44 +231,31 @@ class PavementDesign:
                 x1, y1 = group[i]
                 x2, y2 = group[i + 1]
                 if self.dl == 0:  # Horizontal secondary beams
-                    if self.bv <= self.pillar_dimension:
-                        x1 += half_pillars_dimension
-                        x2 -= half_pillars_dimension
+                    x1up, x1down, x2up, x2down = self.horizontal_beam(x1, x2, y1, y2)
                     self.msp.add_line(
-                        (x1, y1 - half_bv), (x2, y2 - half_bv), dxfattribs={"color": 3}
+                        (x1down, y1 - half_bv),
+                        (x2down, y2 - half_bv),
+                        dxfattribs={"color": 3},
                     )
                     self.msp.add_line(
-                        (x1, y1 + half_bv), (x2, y2 + half_bv), dxfattribs={"color": 3}
+                        (x1up, y1 + half_bv),
+                        (x2up, y2 + half_bv),
+                        dxfattribs={"color": 3},
                     )
                 else:  # Vertical secondary beams
-                    if self.bv <= self.pillar_dimension:
-                        y1 += half_pillars_dimension
-                        y2 -= half_pillars_dimension
-                        y1left = y1right = y1
-                        y2left = y2right = y2
-                    else:
-                        y1left = y1right = y1
-                        y2left = y2right = y2
-                        if y1==0:
-                            y1left +=half_bv 
-                            y1right +=half_bv
-                            if x1==0:
-                                y1left -=2*half_bv
-                            elif x2 == self.divisions_x*self.span_x:
-                                y1right -=2*half_bv
-                        elif y2 == self.divisions_y*self.span_y:
-                            y2left -=half_bv 
-                            y2right -=half_bv
-                            if x1==0:
-                                y2left +=2*half_bv
-                            elif x2 == self.divisions_x*self.span_x:
-                                y2right +=2*half_bv
+                    y1left, y1right, y2left, y2right = self.vertical_beam(
+                        x1, x2, y1, y2
+                    )
 
                     self.msp.add_line(
-                        (x1 - half_bv, y1left), (x2 - half_bv, y2left), dxfattribs={"color": 3}
+                        (x1 - half_bv, y1left),
+                        (x2 - half_bv, y2left),
+                        dxfattribs={"color": 3},
                     )
                     self.msp.add_line(
-                        (x1 + half_bv, y1right), (x2 + half_bv, y2right), dxfattribs={"color": 3}
+                        (x1 + half_bv, y1right),
+                        (x2 + half_bv, y2right),
+                        dxfattribs={"color": 3},
                     )
 
     def add_dimension_lines(self):
@@ -246,7 +290,7 @@ class PavementDesign:
                             "height": 40,
                             "halign": 0.5,
                             "valign": 0.5,
-                            "insert": (x + self.span_x / 2, y_offset + 30),
+                            "insert": (x + self.span_x / 2 - 50, y_offset + 30),
                             "color": 2,  # Yellow
                         },  # Horizontal alignment
                     )
@@ -267,7 +311,7 @@ class PavementDesign:
                             "halign": 0.5,
                             "valign": 0.5,
                             "rotation": 90,
-                            "insert": (x_offset - 30, y + self.span_y / 2),
+                            "insert": (x_offset - 30, y + self.span_y / 2 - 50),
                             "color": 2,  # Yellow
                         },  # Vertical alignment
                     )
@@ -299,8 +343,8 @@ class PavementDesign:
                     "halign": 0.5,  # Horizontal alignment to center
                     "valign": 0.5,  # Vertical alignment to center
                     "insert": (
-                        x + self.pillar_dimension / 2 + 5,
-                        y - self.pillar_dimension / 2 - 20,
+                        x + self.bv / 2 + 5,
+                        y - self.bv + 10,
                     ),  # Position above the center of the pillar
                     "color": 1,  # Black color for the label
                 },
@@ -314,8 +358,8 @@ class PavementDesign:
                     "halign": 0.5,  # Horizontal alignment to center
                     "valign": 0.5,  # Vertical alignment to center
                     "insert": (
-                        x + self.pillar_dimension / 2 + 5,
-                        y - self.pillar_dimension / 2 - 40,
+                        x + self.bv / 2 + 5,
+                        y - self.bv - 10,
                     ),  # Position below the center of the pillar
                     "color": 1,  # Black color for the dimension
                 },
