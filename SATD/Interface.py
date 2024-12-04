@@ -233,6 +233,36 @@ class DesignApp:
             )
 
     def run_genetic_algorithm(self):
+        """
+        Executes the genetic algorithm for optimization and displays the results.
+
+        This function creates an instance of the `GeneticAlgorithm` class using the 
+        current design parameters (`self.params`), runs the optimization process, 
+        and retrieves the best solution and its fitness value. The results are displayed 
+        in a message box for the user.
+
+        Steps:
+            1. Instantiate the genetic algorithm (`GeneticAlgorithm`) with the current parameters.
+            2. Run the `evolve()` method to perform the optimization.
+            3. Retrieve the best individual and its fitness value using `get_best_individual()`.
+            4. Store the final population for further analysis or visualization.
+            5. Display the best individual's details in a message box.
+
+        If an error occurs during the execution, an error message is displayed in a 
+        message box for the user.
+
+        Exceptions:
+            - Catches any exception raised during the execution of the genetic algorithm 
+            and displays an error message with the exception details.
+
+        User Feedback:
+            - Shows an information message with the best solution and its fitness value 
+            if the algorithm runs successfully.
+            - Displays an error message if the algorithm encounters any issues.
+
+        Example Usage:
+            self.run_genetic_algorithm()
+        """
         try:
             # Criando uma instância do algoritmo genético
             self.ga = GeneticAlgorithm(self.params)
@@ -293,9 +323,20 @@ class DesignApp:
             self.ga.evaluation.initialize_individual(self.best_individual)
 
             # Get parameters for floor plan and T-beam drawings
-            DL, NA, NB,NPT, BV, HV, HL, LP, span_x, span_y, divisions_x, divisions_y = (
-                self.ga.evaluation.get_location_drawing_data()
-            )
+            (
+                DL,
+                NA,
+                NB,
+                NPT,
+                BV,
+                HV,
+                HL,
+                LP,
+                span_x,
+                span_y,
+                divisions_x,
+                divisions_y,
+            ) = self.ga.evaluation.get_location_drawing_data()
             # Ajuste de unidades
             BV = int(BV * 100)
             HV = int(HV * 100)
@@ -341,7 +382,7 @@ class DesignApp:
                 return
 
             # Generate T-beam cross-section drawing
-            tbeam = TBeamDrawingDWG(BV, HL, HV, NA, NB,NPT, tbeam_path)
+            tbeam = TBeamDrawingDWG(BV, HL, HV, NA, NB, NPT, tbeam_path)
             tbeam.generate_drawing()
 
             messagebox.showinfo("Success", "DWG files generated successfully!")

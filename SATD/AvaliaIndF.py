@@ -2183,7 +2183,7 @@ class StructuralEvaluation:
         resultados.append(f"VV= {self.VV}")
         resultados.append(f"cf-Total (Viga)= {self.CFTV}")
         resultados.append(f"f-Total (Viga)= {self.FTV}")
-        resultados.append(f"qdv= {self.QDV}")
+        resultados.append(f"QDV= {self.QDV}")
         resultados.append(f"QDP= {self.QDP}")
         resultados.append(f"QDL= {self.QDL}")
 

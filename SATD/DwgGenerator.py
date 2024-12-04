@@ -368,6 +368,18 @@ class PavementDesign:
             pillar_number += 1  # Increment the pillar number for the next pillar
 
     def _label_beams(self):
+        """
+        Adds labels to the beams in the drawing, ensuring that primary and secondary beams 
+        are labeled in the correct order based on the directionality of the slab.
+
+        The labeling order is determined by the direction of the slab (`self.dl`):
+            - If `self.dl` is True, primary beams are labeled first, followed by secondary beams.
+            - If `self.dl` is False, secondary beams are labeled first, followed by primary beams.
+
+        This function delegates the labeling process to two helper methods:
+            - `_label_primary_beams`: Handles the labeling of primary beams.
+            - `_label_secondary_beams`: Handles the labeling of secondary beams.
+        """
         if self.dl:
             self._label_primary_beams()
             self._label_secondary_beams()
