@@ -2255,6 +2255,7 @@ class StructuralEvaluation:
             self.DL,
             self.NA[self.ANA],
             self.NB[self.ANB],
+            self.NPT[self.ANPT],
             self.BV[self.VV],
             self.HV[self.VV],
             self.HL[self.VL],

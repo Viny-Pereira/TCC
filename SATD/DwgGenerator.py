@@ -48,7 +48,7 @@ class PavementDesign:
         self.divisions_x = num_divisions_x
         self.divisions_y = num_divisions_y
 
-    def create_pillar(self, x, y):
+    def _create_pillar(self, x, y):
         """
         Creates a square pillar based on the center coordinates and side dimension.
 
@@ -65,7 +65,7 @@ class PavementDesign:
         ]
         self.msp.add_lwpolyline(points, close=True, dxfattribs={"color": 1})
 
-    def generate_coordinates(self):
+    def _generate_coordinates(self):
         """
         Generates coordinates for pillars based on the design parameters.
 
@@ -79,15 +79,15 @@ class PavementDesign:
                 coordinates.append((x, y))
         return coordinates
 
-    def place_pillars(self):
+    def _place_pillars(self):
         """
         Places multiple pillars on the drawing based on the generated coordinates.
         """
-        coordinates = self.generate_coordinates()
+        coordinates = self._generate_coordinates()
         for coord in coordinates:
-            self.create_pillar(*coord)
+            self._create_pillar(*coord)
 
-    def horizontal_beam(self, x1, x2, y1, y2):
+    def _horizontal_beam(self, x1, x2, y1, y2):
         """
         Adjusts the coordinates for horizontal beams.
 
@@ -125,7 +125,7 @@ class PavementDesign:
                     x2up += 2 * half_bv
         return x1up, x1down, x2up, x2down
 
-    def vertical_beam(self, x1, x2, y1, y2):
+    def _vertical_beam(self, x1, x2, y1, y2):
         """
         Adjusts the coordinates for vertical beams.
 
@@ -162,11 +162,11 @@ class PavementDesign:
                     y2right += 2 * half_bv
         return y1left, y1right, y2left, y2right
 
-    def add_primary_beams(self):
+    def _add_primary_beams(self):
         """
         Adds primary beams to the drawing, connecting pillars along the specified direction.
         """
-        coordinates = self.generate_coordinates()
+        coordinates = self._generate_coordinates()
         half_bv = self.bv / 2
         axis = 1 if self.dl == 0 else 0
         coordinates.sort(key=lambda c: c[axis])
@@ -182,7 +182,7 @@ class PavementDesign:
                 x1, y1 = group[i]
                 x2, y2 = group[i + 1]
                 if self.dl == 1:  # Horizontal beams
-                    x1up, x1down, x2up, x2down = self.horizontal_beam(x1, x2, y1, y2)
+                    x1up, x1down, x2up, x2down = self._horizontal_beam(x1, x2, y1, y2)
                     self.msp.add_line(
                         (x1down, y1 - half_bv),
                         (x2down, y2 - half_bv),
@@ -194,7 +194,7 @@ class PavementDesign:
                         dxfattribs={"color": 3},
                     )
                 else:  # Vertical beams
-                    y1left, y1right, y2left, y2right = self.vertical_beam(
+                    y1left, y1right, y2left, y2right = self._vertical_beam(
                         x1, x2, y1, y2
                     )
                     self.msp.add_line(
@@ -208,11 +208,11 @@ class PavementDesign:
                         dxfattribs={"color": 3},
                     )
 
-    def add_secondary_beams(self):
+    def _add_secondary_beams(self):
         """
         Adds secondary beams to the drawing in the first and last rows/columns of pillars.
         """
-        coordinates = self.generate_coordinates()
+        coordinates = self._generate_coordinates()
         half_bv = self.bv / 2
         axis = 0 if self.dl == 0 else 1
         coordinates.sort(key=lambda c: (c[1 - axis], c[axis]))
@@ -231,7 +231,7 @@ class PavementDesign:
                 x1, y1 = group[i]
                 x2, y2 = group[i + 1]
                 if self.dl == 0:  # Horizontal secondary beams
-                    x1up, x1down, x2up, x2down = self.horizontal_beam(x1, x2, y1, y2)
+                    x1up, x1down, x2up, x2down = self._horizontal_beam(x1, x2, y1, y2)
                     self.msp.add_line(
                         (x1down, y1 - half_bv),
                         (x2down, y2 - half_bv),
@@ -243,7 +243,7 @@ class PavementDesign:
                         dxfattribs={"color": 3},
                     )
                 else:  # Vertical secondary beams
-                    y1left, y1right, y2left, y2right = self.vertical_beam(
+                    y1left, y1right, y2left, y2right = self._vertical_beam(
                         x1, x2, y1, y2
                     )
 
@@ -258,14 +258,14 @@ class PavementDesign:
                         dxfattribs={"color": 3},
                     )
 
-    def add_dimension_lines(self):
+    def _add_dimension_lines(self):
         """
         Adds external dimension lines marking the axes of the pillars.
 
         - Horizontal dimensions are added above and below the topmost and bottommost rows of pillars.
         - Vertical dimensions are added to the left and right of the leftmost and rightmost columns of pillars.
         """
-        coordinates = self.generate_coordinates()
+        coordinates = self._generate_coordinates()
         if not coordinates:
             return  # No coordinates to process
 
@@ -290,7 +290,7 @@ class PavementDesign:
                             "height": 40,
                             "halign": 0.5,
                             "valign": 0.5,
-                            "insert": (x + self.span_x*.45, y_offset + 30),
+                            "insert": (x + self.span_x * 0.45, y_offset + 30),
                             "color": 2,  # Yellow
                         },  # Horizontal alignment
                     )
@@ -311,19 +311,19 @@ class PavementDesign:
                             "halign": 0.5,
                             "valign": 0.5,
                             "rotation": 90,
-                            "insert": (x_offset - 30, y + self.span_y *.45),
+                            "insert": (x_offset - 30, y + self.span_y * 0.45),
                             "color": 2,  # Yellow
                         },  # Vertical alignment
                     )
 
-    def add_pillar_labels(self):
+    def _add_pillar_labels(self):
         """
         Adds labels with pillar names and dimensions at the center of each pillar.
 
         The pillars will be numbered from the topmost row, starting from the rightmost column,
         moving to the left, then to the next row below.
         """
-        coordinates = self.generate_coordinates()
+        coordinates = self._generate_coordinates()
         # Organize coordinates by rows (same y-value)
         coordinates.sort(
             key=lambda coord: (-coord[1], coord[0])
@@ -344,7 +344,7 @@ class PavementDesign:
                     "valign": 0.5,  # Vertical alignment to center
                     "insert": (
                         x + self.bv / 2 + 5,
-                        y - self.bv + 10,
+                        y - self.bv + 5,
                     ),  # Position above the center of the pillar
                     "color": 1,  # Black color for the label
                 },
@@ -359,7 +359,7 @@ class PavementDesign:
                     "valign": 0.5,  # Vertical alignment to center
                     "insert": (
                         x + self.bv / 2 + 5,
-                        y - self.bv - 10,
+                        y - self.bv - 15,
                     ),  # Position below the center of the pillar
                     "color": 1,  # Black color for the dimension
                 },
@@ -367,27 +367,23 @@ class PavementDesign:
 
             pillar_number += 1  # Increment the pillar number for the next pillar
 
-    def label_beams(self):
+    def _label_beams(self):
         if self.dl:
-            self.label_primary_beams()
-            self.label_secondary_beams()
+            self._label_primary_beams()
+            self._label_secondary_beams()
         else:
-            self.label_secondary_beams()
-            self.label_primary_beams()
+            self._label_secondary_beams()
+            self._label_primary_beams()
 
-    def label_primary_beams(self):
+    def _label_primary_beams(self):
         """Adds labels to the beams with numbering and orientation."""
-        coordinates = self.generate_coordinates()
+        coordinates = self._generate_coordinates()
         axis = 1 if self.dl == 0 else 0
         if self.dl:
             self.label_count = 1  # Start numbering from V1
-            coordinates.sort(
-                key=lambda coord: (-coord[1], coord[0])
-            )
+            coordinates.sort(key=lambda coord: (-coord[1], coord[0]))
         else:
-            coordinates.sort(
-                key=lambda coord: (coord[0], -coord[1])
-            )
+            coordinates.sort(key=lambda coord: (coord[0], -coord[1]))
         grouped = {}
         for coord in coordinates:
             key = coord[1 - axis]
@@ -404,11 +400,11 @@ class PavementDesign:
                 label_text = f"V{self.label_count} {self.bv}x{self.hv}"
                 if self.dl == 0:
                     rotation = 90
-                    y = y_center-self.span_y*0.1
+                    y = y_center - self.span_y * 0.1
                     x = x2 - self.bv / 2
                 else:
                     y = y2 + self.bv / 2
-                    x = x_center-self.span_x*0.1
+                    x = x_center - self.span_x * 0.1
                     rotation = 0
 
                 self.msp.add_text(
@@ -424,9 +420,9 @@ class PavementDesign:
                 )
                 self.label_count += 1
 
-    def label_secondary_beams(self):
+    def _label_secondary_beams(self):
         """Adds labels to the secondary beams with numbering and orientation."""
-        coordinates = self.generate_coordinates()
+        coordinates = self._generate_coordinates()
         half_bv = self.bv / 2
         axis = 0 if self.dl == 0 else 1
         # Ordena as coordenadas com base no critério de 'dl'
@@ -447,9 +443,8 @@ class PavementDesign:
             groups[0],
             groups[-1],
         ]  # Apenas as primeiras e últimas linhas/colunas
-        if self.dl==0:
+        if self.dl == 0:
             self.label_count = 1  # Começar a numeração de S1
-
 
         for group in target_groups:
             group.sort(key=lambda c: c[axis], reverse=(self.dl))
@@ -463,9 +458,9 @@ class PavementDesign:
                 if self.dl == 0:  # Para vigas horizontais secundárias
                     rotation = 0
                     y = y2 + half_bv
-                    x = x_center-self.span_x*0.1
+                    x = x_center - self.span_x * 0.1
                 else:  # Para vigas verticais secundárias
-                    y = y_center-self.span_y*0.1
+                    y = y_center - self.span_y * 0.1
                     x = x2 - half_bv
                     rotation = 90
 
@@ -503,16 +498,16 @@ class PavementDesign:
         Returns:
             None
         """
-        self.place_pillars()
-        self.add_primary_beams()
-        self.add_secondary_beams()
-        self.add_dimension_lines()  # Adiciona cotagem externa
-        self.add_pillar_labels()  # Adiciona rótulos aos pilares
-        self.label_beams()  # Adiciona rótulos aos pilares
+        self._place_pillars()
+        self._add_primary_beams()
+        self._add_secondary_beams()
+        self._add_dimension_lines()  # Adiciona cotagem externa
+        self._add_pillar_labels()  # Adiciona rótulos aos pilares
+        self._label_beams()  # Adiciona rótulos aos pilares
 
-        self.save()
+        self._save()
 
-    def save(self):
+    def _save(self):
         """
         Saves the DXF file with the specified name.
         """
@@ -521,7 +516,7 @@ class PavementDesign:
 
 
 class TBeamDrawingDWG:
-    def __init__(self, bw, hl, hv, Na, Nb, file_name="viga_T_invertido.dxf"):
+    def __init__(self, bw, hl, hv, Na, Nb, NPT, file_name="viga_T_invertido.dxf"):
         """
         Inicializa a classe com as dimensões da viga T invertido e o nome do arquivo DXF.
 
@@ -539,6 +534,7 @@ class TBeamDrawingDWG:
         self.height = hv + (hl - 5)  # altura total da viga
         self.Na = Na
         self.Nb = Nb
+        self.NPT = NPT
         self.file_name = file_name  # Nome do arquivo DXF a ser gerado
 
     def generate_drawing(self):
@@ -554,13 +550,15 @@ class TBeamDrawingDWG:
         # Adicionando cabos de protensao
         self._add_pretension_cables(msp)
 
+        self._add_passive_reinforcement(msp)
+
         # Adicionando as cotas
         self._add_cotas(msp)
 
         # Salvando o arquivo DXF
-        self.save(doc)
+        self._save(doc)
 
-    def save(self, doc):
+    def _save(self, doc):
         """
         Saves the DXF file with the specified name.
         """
@@ -657,7 +655,7 @@ class TBeamDrawingDWG:
         x_mean = (start_point[0] + end_point[0]) / 2
         y_mean = (start_point[1] + end_point[1]) / 2
         if sentido:
-            y = y_mean*.95
+            y = y_mean * 0.95
             x = start_point[0]
             rotation = 90
             msp.add_line(
@@ -671,7 +669,7 @@ class TBeamDrawingDWG:
                 dxfattribs={"color": 2},
             )
         else:
-            x = x_mean*.95
+            x = x_mean * 0.95
             y = start_point[1]
             rotation = 0
             # Adiciona os marcadores de cota (ticks)
@@ -720,6 +718,37 @@ class TBeamDrawingDWG:
                 msp, self.Nb, cable_height=10, layer_name="Pretensao2"
             )
 
+    def _add_passive_reinforcement(self, msp):
+        """
+        Adiciona a representação da armadura passiva.
+
+        :param msp: ModelSpace do documento DXF
+        """
+        # Primeira camada
+        if self.NPT > 0:
+            cable_height = self.height - 5
+            self._add_reinforced_layer(
+                msp, self.NPT, cable_height=cable_height, layer_name="Pretensao1"
+            )
+
+    def _add_reinforced_layer(self, msp, num_cables, cable_height, layer_name):
+        """
+        Adiciona uma camada de cabos de protensão no desenho DXF.
+
+        :param msp: ModelSpace do documento DXF
+        :param num_cables: Número de cabos na camada
+        :param cable_height: Altura da camada acima da base
+        :param layer_name: Nome do layer para os cabos
+        """
+        distance = self.bw / (num_cables + 1)  # Distância entre os cabos
+        for i in range(1, num_cables + 1):
+            x_position = distance * i + 15
+            msp.add_circle(
+                (x_position, cable_height),  # Posição da bolinha
+                radius=1,  # Tamanho da bolinha (cabo de protensão)
+                dxfattribs={"layer": layer_name, "color": 2},  # Cor vermelha
+            )
+
     def _add_cable_layer(self, msp, num_cables, cable_height, layer_name):
         """
         Adiciona uma camada de cabos de protensão no desenho DXF.
@@ -741,26 +770,32 @@ class TBeamDrawingDWG:
 
 # Example Usage
 if __name__ == "__main__":
-    plant = PavementDesign(
-        filename="planta_com_labels.dxf",
-        beam_orientation=0,
-        beam_width=70,
-        beam_height=60,
-        pillar_size=50,
-        span_x=775,
-        span_y=900,
-        num_divisions_x=4,
-        num_divisions_y=3,
-    )
-
-    plant.generate_drawing()
-
     # Exemplo de uso
-    bw = 60  # Largura da alma (exemplo)
-    hl = 20  # Altura da laje (exemplo)
-    hv = 20  # Altura inferior da viga (exemplo)
+    beam_orientation = (1,)
+    pillar_size = 50
+    beam_width = 60  # Largura da alma (exemplo)
+    beam_height = 20  # Altura inferior da viga (exemplo)
+    slab_height = 20  # Altura da laje (exemplo)
     # Número de cabos por camada
     Na = 10  # Número de cabos na primeira camada
     Nb = 4  # Número de cabos na segunda camada
-    viga = TBeamDrawingDWG(bw, hl, hv, Na, Nb)
+    NPT = 5
+    span_x = 775
+    span_y = 800
+    num_divisions_x = 6
+    num_divisions_y = 6
+    plant = PavementDesign(
+        filename="planta_com_labels.dxf",
+        beam_orientation=0,
+        beam_width=beam_width,
+        beam_height=beam_height,
+        pillar_size=pillar_size,
+        span_x=span_x,
+        span_y=span_y,
+        num_divisions_x=num_divisions_x,
+        num_divisions_y=num_divisions_y,
+    )
+
+    plant.generate_drawing()
+    viga = TBeamDrawingDWG(beam_width, slab_height, beam_height, Na, Nb, NPT)
     viga.generate_drawing()
