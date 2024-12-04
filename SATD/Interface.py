@@ -285,25 +285,15 @@ class DesignApp:
     def generate_dwg(self):
         """
         Generates DWG files for the structural design, including a labeled floor plan
-        and a T-beam cross-section drawing. Uses the best individual from the genetic
-        algorithm's results to initialize design parameters.
-
-        Steps:
-            1. Retrieves drawing data from the genetic algorithm's evaluation for the best individual.
-            2. Generates a labeled floor plan (DXF file) with beam orientations, dimensions,
-            and layout information using the `PavementDesign` class.
-            3. Creates a T-beam cross-section drawing (DXF file) with dimensions and node
-            information using the `TBeamDrawingDWG` class.
-
-        Raises:
-            Exception: If there is an issue during the drawing generation process.
+        and a T-beam cross-section drawing. Prompts the user to choose the save location
+        and filenames for the DWG files.
         """
         try:
             # Initialize the best individual for evaluation
             self.ga.evaluation.initialize_individual(self.best_individual)
 
             # Get parameters for floor plan and T-beam drawings
-            DL, NA, NB, BV, HV, HL, LP, span_x, span_y, divisions_x, divisions_y = (
+            DL, NA, NB,NPT, BV, HV, HL, LP, span_x, span_y, divisions_x, divisions_y = (
                 self.ga.evaluation.get_location_drawing_data()
             )
             # Ajuste de unidades
@@ -313,9 +303,21 @@ class DesignApp:
             LP = int(LP * 100)
             span_x = span_x * 100
             span_y = span_y * 100
+
+            # Ask user where to save the floor plan DWG
+            floor_plan_path = filedialog.asksaveasfilename(
+                defaultextension=".dxf",
+                filetypes=[("DXF files", "*.dxf")],
+                title="Save Floor Plan Drawing As",
+                initialfile="floor_plan_with_labels.dxf",
+            )
+            if not floor_plan_path:
+                messagebox.showinfo("Cancelado", "Operação de salvar cancelada.")
+                return
+
             # Generate floor plan with labels
             plant = PavementDesign(
-                filename="planta_com_labels.dxf",
+                filename=floor_plan_path,
                 beam_orientation=DL,
                 beam_width=BV,
                 beam_height=HV,
@@ -327,8 +329,19 @@ class DesignApp:
             )
             plant.generate_drawing()
 
+            # Ask user where to save the T-beam cross-section DWG
+            tbeam_path = filedialog.asksaveasfilename(
+                defaultextension=".dxf",
+                filetypes=[("DXF files", "*.dxf")],
+                title="Save T-Beam Drawing As",
+                initialfile="tbeam_cross_section.dxf",
+            )
+            if not tbeam_path:
+                messagebox.showinfo("Cancelado", "Operação de salvar cancelada.")
+                return
+
             # Generate T-beam cross-section drawing
-            tbeam = TBeamDrawingDWG(BV, HL, HV, NA, NB)
+            tbeam = TBeamDrawingDWG(BV, HL, HV, NA, NB,NPT, tbeam_path)
             tbeam.generate_drawing()
 
             messagebox.showinfo("Success", "DWG files generated successfully!")
