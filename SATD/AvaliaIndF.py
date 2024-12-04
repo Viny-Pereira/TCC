@@ -2114,7 +2114,7 @@ class StructuralEvaluation:
         )
         return self.vtc
 
-    def mostrar_resultados(self, individuo_n):
+    def display_results(self, individuo_n):
         """
         Displays the structural calculation results and optionally writes them to an output file.
 
@@ -2135,7 +2135,7 @@ class StructuralEvaluation:
         resultados = []
 
         # Variáveis de projeto
-        resultados.append(f"--- Variáveis Projeto Indivíduo {individuo_n} ---")
+        resultados.append(f"--- Variaveis Projeto Individuo {individuo_n} ---")
         resultados.append(f"NumGen= {self.numgen}")
         resultados.append(f"NX= {self.NX}")
         resultados.append(f"NY= {self.NY}")
@@ -2154,16 +2154,16 @@ class StructuralEvaluation:
         # Custos
         resultados.append(f"Custo Concreto= {self.CUSTOCONC:.2f}")
         resultados.append(f"Volume Concreto= {self.vtc:.2f}")
-        resultados.append(f"Custo Protensão= {self.CUSTOPROT:.2f}")
+        resultados.append(f"Custo Protensao= {self.CUSTOPROT:.2f}")
         resultados.append(f"Custo Aço Passivo= {self.CUSTOAD:.2f}")
         resultados.append(f"Custo Transporte= {self.CTT:.2f}")
         resultados.append(f"Custo Montagem= {self.CTMT:.2f}")
         resultados.append(f"Custo Desp Operacional= {self.CDOP:.2f}")
         resultados.append(
-            f"Custo %Fabricacao= {(self.CUSTOFAB / self.CUSTOEST) * 100:.2f}%"
+            f"Custo Fabricacao(%)= {(self.CUSTOFAB / self.CUSTOEST) * 100:.2f}%"
         )
-        resultados.append(f"Custo %Transporte= {(self.CTT / self.CUSTOEST) * 100:.2f}%")
-        resultados.append(f"Custo %Montagem= {(self.CTMT / self.CUSTOEST) * 100:.2f}%")
+        resultados.append(f"Custo Transporte(%)= {(self.CTT / self.CUSTOEST) * 100:.2f}%")
+        resultados.append(f"Custo Montagem(%)= {(self.CTMT / self.CUSTOEST) * 100:.2f}%")
         resultados.append(f"Custo Total= {self.CUSTOTAL:.2f}")
         resultados.append(f"Pentotal= {self.PENTOTAL:.2f}")
         resultados.append(f"Apt= {self.F:.2f}")
@@ -2188,6 +2188,68 @@ class StructuralEvaluation:
         resultados.append(f"QDL= {self.QDL}")
 
         return "\n".join(resultados)
+
+    def get_results_as_dict(self, individual_n):
+        """
+        Retorna os resultados como um dicionário estruturado.
+
+        Args:
+            individual_n (int): Identificador do indivíduo.
+
+        Returns:
+            dict: Resultados estruturados como dicionário.
+        """
+        self.calcular_vtc()
+        results = {
+            "individual": individual_n,
+            "variables": {
+                "NumGen": self.numgen,
+                "NX": self.NX,
+                "NY": self.NY,
+                "DL": self.DL,
+                "FCKCML": self.FCKML[self.CML],
+                "FCKCPM": self.FCKPM[self.PM],
+                "HL": self.HL[self.VL],
+                "LLJ": self.LLJ,
+                "HV": self.HV[self.VV],
+                "BV": self.BV[self.VV],
+                "LLV": self.LLV,
+                "NA": self.NA[self.ANA],
+                "NB": self.NB[self.ANB],
+                "NPT": self.NPT[self.ANPT],
+            },
+            "costs": {
+                "Custo Concreto": self.CUSTOCONC,
+                "Volume Concreto": self.vtc,
+                "Custo Protensao": self.CUSTOPROT,
+                "Custo Aco Passivo": self.CUSTOAD,
+                "Custo Transporte": self.CTT,
+                "Custo Montagem": self.CTMT,
+                "Custo Desp Operacional": self.CDOP,
+                "Custo Fabricacao(%)": (self.CUSTOFAB / self.CUSTOEST) * 100,
+                "Custo Transporte(%)": (self.CTT / self.CUSTOEST) * 100,
+                "Custo Montagem(%)": (self.CTMT / self.CUSTOEST) * 100,
+                "Custo Total": self.CUSTOTAL,
+                "Pentotal": self.PENTOTAL,
+                "Apt": self.F,
+                "Custo Estrutura/m2": (self.CUSTOEST * 1.33) / (self.LX * self.LY * self.numpav),
+            },
+            "slab_data": {
+                "VL": self.VL,
+                "flecha": self.fi,
+                "f-Total": self.ft,
+                "LP": self.LP,
+            },
+            "beam_data": {
+                "VV": self.VV,
+                "cf-Total": self.CFTV,
+                "f-Total": self.FTV,
+                "QDV": self.QDV,
+                "QDP": self.QDP,
+                "QDL": self.QDL,
+            },
+        }
+        return results
 
     def calculate_restrictions_final(self):
         # Verificação das restrições

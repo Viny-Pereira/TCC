@@ -12,7 +12,6 @@ class DesignApp:
     def __init__(self, root):
         self.root = root
         self.root.title("SATD")
-        self.file_manager = FileManager()
         # Define o ícone da janela
         self.set_window_icon()
 
@@ -284,6 +283,7 @@ class DesignApp:
             messagebox.showerror("Erro", f"Erro ao rodar o algoritmo genético: {e}")
 
     def write_file(self):
+        self.file_manager = FileManager()
         """
         Gerencia o processo de salvar os resultados em um arquivo.
         Chama o FileManager para escolher e salvar o arquivo.
@@ -295,19 +295,24 @@ class DesignApp:
             # Counter para o índice dos indivíduos
             count = 0
             result_content = []
+            json_info_list = []
 
             for individual in sorted_population:
                 count += 1
                 self.ga.evaluation.initialize_individual(individual)
 
                 # Obtém os detalhes para o indivíduo
-                individual_info = self.ga.evaluation.mostrar_resultados(count)
+                individual_info = self.ga.evaluation.display_results(count)
                 result_content.extend(
                     individual_info
                 )  # Adiciona ao conteúdo para o arquivo
+                json_info = self.ga.evaluation.get_results_as_dict(count)
+                json_info_list.append(json_info)
+
 
             # Chama o FileManager para salvar o arquivo
-            self.file_manager.save_file(result_content)
+            self.file_manager.save_txt_file(result_content)
+            self.file_manager.save_json_file(json_info_list)
 
         except Exception as e:
             messagebox.showerror("Erro", f"Erro ao salvar os resultados: {e}")

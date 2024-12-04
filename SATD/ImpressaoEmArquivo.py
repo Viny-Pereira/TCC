@@ -1,32 +1,69 @@
 from tkinter.filedialog import asksaveasfilename
 from tkinter import messagebox
+import json
+import numpy as np
 
 
 class FileManager:
     def __init__(self):
-        pass
+        # Abre o diálogo para salvar o arquivo
+        self.file_path = asksaveasfilename(
+            title="Salvar Arquivo",
+        )
+        if not self.file_path:
+            return  # O usuário cancelou a operação
 
-    def save_file(self, content):
-        """
-        Abre um diálogo para o usuário escolher onde salvar o arquivo e grava o conteúdo nele.
-        """
+    def save_txt_file(self, content):
         try:
-            # Abre o diálogo para salvar o arquivo
-            file_path = asksaveasfilename(
-                title="Salvar Arquivo",
-                defaultextension=".txt",
-                filetypes=[("Text Files", "*.txt"), ("All Files", "*.*")],
-            )
-
-            if not file_path:
-                return  # O usuário cancelou a operação
-
-            # Salva o conteúdo no arquivo escolhido
+            file_path=f"{self.file_path}.txt"
+            # Salvar o conteúdo no arquivo escolhido
             with open(file_path, "w", encoding="utf-8") as file:
-                file.writelines(content)
-
-            # Mensagem de sucesso
-            messagebox.showinfo("Sucesso", f"Arquivo salvo com sucesso em {file_path}")
-
+                if isinstance(content, list):
+                    file.writelines(content)
+                else:
+                    raise ValueError("Conteúdo inválido para arquivo de texto.")
+            messagebox.showinfo(
+                "Sucesso", f"Arquivo salvo com sucesso em {self.file_path}"
+            )
         except Exception as e:
             messagebox.showerror("Erro", f"Erro ao salvar o arquivo: {e}")
+
+    def save_json_file(self, content):
+        try:
+            file_path = f"{self.file_path}.json"
+            # Abre o arquivo JSON e carrega os dados existentes, se houver
+            try:
+                with open(file_path, "r", encoding="utf-8") as file:
+                    existing_content = json.load(file)
+            except (FileNotFoundError, json.JSONDecodeError):
+                existing_content = []  # Se o arquivo não existir ou estiver vazio, inicia uma lista vazia
+
+            # Adiciona o novo conteúdo à lista existente
+            existing_content.extend(content)
+
+            # Salva o conteúdo atualizado no arquivo JSON
+            with open(file_path, "w", encoding="utf-8") as file:
+                # Converte valores do tipo NumPy para tipos nativos do Python
+                existing_content = self.convert_np_types(existing_content)
+                json.dump(existing_content, file, indent=4)
+
+            messagebox.showinfo(
+                "Sucesso", f"Arquivo JSON salvo com sucesso em {self.file_path}"
+            )
+        except Exception as e:
+            messagebox.showerror("Erro", f"Erro ao salvar o arquivo: {e}")
+
+    def convert_np_types(self, data):
+        """
+        Converte tipos do NumPy para tipos nativos do Python (como int, float).
+        """
+        if isinstance(data, dict):
+            return {key: self.convert_np_types(value) for key, value in data.items()}
+        elif isinstance(data, list):
+            return [self.convert_np_types(item) for item in data]
+        elif isinstance(data, np.int32) or isinstance(data, np.int64):
+            return int(data)  # Converte para int nativo do Python
+        elif isinstance(data, np.float32) or isinstance(data, np.float64):
+            return float(data)  # Converte para float nativo do Python
+        else:
+            return data
