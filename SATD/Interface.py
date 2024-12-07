@@ -45,7 +45,7 @@ class DesignApp:
         # Botões para interações
         tk.Button(
             root,
-            text="Calcular e Exibir Resumo",
+            text="Calcular e Salvar resultados",
             command=self.calculate_and_show_summary,
         ).grid(row=len(labels), column=0, columnspan=2)
         tk.Button(root, text="Salvar Configuração", command=self.save_parameters).grid(
@@ -55,14 +55,8 @@ class DesignApp:
             root, text="Carregar Configuração", command=self.load_parameters
         ).grid(row=len(labels) + 2, column=0, columnspan=2)
 
-        tk.Button(root, text="Salvar Resultados", command=self.write_file).grid(
-            row=len(labels) + 4, column=0, columnspan=2
-        )
-        tk.Button(root, text="Mostrar Evolução", command=self.plot_evolution).grid(
-            row=len(labels) + 5, column=0, columnspan=2
-        )
-        tk.Button(root, text="Generate DWG", command=self.generate_dwg).grid(
-            row=len(labels) + 6, column=0, columnspan=2
+        tk.Button(root, text="Gerar desenhos", command=self.generate_dwg).grid(
+            row=len(labels) + 3, column=0, columnspan=2
         )
 
     def set_window_icon(self):
@@ -178,8 +172,10 @@ class DesignApp:
             parameters_dict = self.params.get_parameters()
             self.parameters_dict = parameters_dict
             # Exibindo o resumo em uma janela estruturada
-            self.display_summary_window(parameters_dict)
             self.run_genetic_algorithm()
+            self.write_file()
+            file_path = f"{self.file_manager.file_path}.json"
+            self.display_summary_window(file_path)
 
         except ValueError as e:
             messagebox.showerror(
@@ -190,9 +186,35 @@ class DesignApp:
     def get_parameters(self):
         return self.parameters_dict
 
-    def display_summary_window(self, parameters_dict):
+    def display_summary_window(self, json_file="individuos.json"):
+        """
+        Carrega os dados do primeiro indivíduo de um arquivo JSON e exibe em uma interface gráfica.
+
+        :param json_file: Caminho para o arquivo JSON contendo os indivíduos.
+        """
+        # Abrir e carregar o arquivo JSON
+        with open(json_file, "r") as file:
+            data = json.load(file)
+        
+        # Obter o primeiro indivíduo do JSON
+        if data:
+            first_individual = data[0]  # O primeiro indivíduo da lista
+        else:
+            tk.messagebox.showerror("Erro", "O arquivo JSON está vazio!")
+            return
+
+        # Criar um dicionário com as informações do primeiro indivíduo
+        parameters_dict = {
+            "Individual": first_individual.get("individual"),
+            **{f"{k}": v for k, v in first_individual.get("variables", {}).items()},
+            **{f"{k}": v for k, v in first_individual.get("costs", {}).items()},
+            **{f"{k}": v for k, v in first_individual.get("slab_data", {}).items()},
+            **{f"{k}": v for k, v in first_individual.get("beam_data", {}).items()},
+        }
+
+        # Criar uma nova janela para exibir o resumo
         top = tk.Toplevel(self.root)
-        top.title("Resumo dos Parâmetros de Design")
+        top.title("Resumo do Primeiro Indivíduo")
         tree = ttk.Treeview(
             top, columns=["Parâmetro", "Valor"], show="headings", height=20
         )
@@ -200,6 +222,7 @@ class DesignApp:
         tree.heading("Valor", text="Valor")
         tree.pack(fill=tk.BOTH, expand=True)
 
+        # Inserir os dados do dicionário na interface
         for key, value in parameters_dict.items():
             tree.insert("", tk.END, values=(key, value))
 

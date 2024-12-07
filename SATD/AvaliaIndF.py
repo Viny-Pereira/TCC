@@ -475,7 +475,7 @@ class StructuralEvaluation:
 
         # Características geométricas da viga
         # Usando operações vetorizadas para Altura da Viga
-        base_HV = 0.20 + np.arange(5) * 0.05
+        base_HV = np.round(0.20 + np.arange(5) * 0.05, 2)
         self.HV[:5] = base_HV
         self.HV[5:10] = base_HV
         self.HV[10:15] = base_HV
@@ -2162,8 +2162,12 @@ class StructuralEvaluation:
         resultados.append(
             f"Custo Fabricacao(%)= {(self.CUSTOFAB / self.CUSTOEST) * 100:.2f}%"
         )
-        resultados.append(f"Custo Transporte(%)= {(self.CTT / self.CUSTOEST) * 100:.2f}%")
-        resultados.append(f"Custo Montagem(%)= {(self.CTMT / self.CUSTOEST) * 100:.2f}%")
+        resultados.append(
+            f"Custo Transporte(%)= {(self.CTT / self.CUSTOEST) * 100:.2f}%"
+        )
+        resultados.append(
+            f"Custo Montagem(%)= {(self.CTMT / self.CUSTOEST) * 100:.2f}%"
+        )
         resultados.append(f"Custo Total= {self.CUSTOTAL:.2f}")
         resultados.append(f"Pentotal= {self.PENTOTAL:.2f}")
         resultados.append(f"Apt= {self.F:.2f}")
@@ -2232,7 +2236,8 @@ class StructuralEvaluation:
                 "Custo Total": self.CUSTOTAL,
                 "Pentotal": self.PENTOTAL,
                 "Apt": self.F,
-                "Custo Estrutura/m2": (self.CUSTOEST * 1.33) / (self.LX * self.LY * self.numpav),
+                "Custo Estrutura/m2": (self.CUSTOEST * 1.33)
+                / (self.LX * self.LY * self.numpav),
             },
             "slab_data": {
                 "VL": self.VL,
