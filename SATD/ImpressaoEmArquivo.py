@@ -67,3 +67,6 @@ class FileManager:
             return float(data)  # Converte para float nativo do Python
         else:
             return data
+        
+    def get_file_path(self):
+        return self.file_path
