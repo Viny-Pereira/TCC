@@ -116,7 +116,7 @@ class PavementDesign:
                 x2down += adicional_dimension
         return x1up, x1down, x2up, x2down
 
-    def _vertical_beam(self, x1, x2, y1, y2,adicional_dimension):
+    def _vertical_beam(self, x1, x2, y1, y2, adicional_dimension):
         """
         Adjusts the coordinates for vertical beams.
 
@@ -165,7 +165,9 @@ class PavementDesign:
                 x1, y1 = group[i]
                 x2, y2 = group[i + 1]
                 if self.dl == 1:  # Horizontal beams
-                    x1up, x1down, x2up, x2down = self._horizontal_beam(x1, x2, y1, y2,half_pillars_dimension)
+                    x1up, x1down, x2up, x2down = self._horizontal_beam(
+                        x1, x2, y1, y2, half_pillars_dimension
+                    )
                     self.msp.add_line(
                         (x1down, y1 - half_bv),
                         (x2down, y2 - half_bv),
@@ -195,7 +197,7 @@ class PavementDesign:
         """
         Adds slab closures along the edges of the structure.
 
-        This function draws additional lines at the perimeter of the slab 
+        This function draws additional lines at the perimeter of the slab
         to represent the slab closures for structural detailing.
         """
         x_max = self.divisions_x * self.span_x
@@ -203,36 +205,34 @@ class PavementDesign:
         half_bean_dimension = self.bv / 2
         half_pillars_dimension = self.pillar_dimension / 2
         if self.bv <= self.pillar_dimension:
-            adicional_lenght=half_pillars_dimension
+            adicional_lenght = half_pillars_dimension
         else:
-            adicional_lenght=half_bean_dimension
+            adicional_lenght = half_bean_dimension
 
         if self.dl == 0:
             # Horizontal edges (top and bottom)
             self.msp.add_line(
-                (0-adicional_lenght, -half_pillars_dimension),
-                (x_max+adicional_lenght, -half_pillars_dimension),
+                (0 - adicional_lenght, -half_pillars_dimension),
+                (x_max + adicional_lenght, -half_pillars_dimension),
                 dxfattribs={"color": 0},
             )
             self.msp.add_line(
-                (0-adicional_lenght, y_max + half_pillars_dimension),
-                (x_max+adicional_lenght, y_max + half_pillars_dimension),
+                (0 - adicional_lenght, y_max + half_pillars_dimension),
+                (x_max + adicional_lenght, y_max + half_pillars_dimension),
                 dxfattribs={"color": 0},
             )
         else:
-            print("FFFFF")
             # Vertical edges (left and right)
             self.msp.add_line(
-                (-half_pillars_dimension, 0-adicional_lenght),
-                (-half_pillars_dimension, y_max+adicional_lenght),
+                (-half_pillars_dimension, 0 - adicional_lenght),
+                (-half_pillars_dimension, y_max + adicional_lenght),
                 dxfattribs={"color": 0},
             )
             self.msp.add_line(
-                (x_max + half_pillars_dimension, 0-adicional_lenght),
-                (x_max + half_pillars_dimension, y_max+adicional_lenght),
+                (x_max + half_pillars_dimension, 0 - adicional_lenght),
+                (x_max + half_pillars_dimension, y_max + adicional_lenght),
                 dxfattribs={"color": 0},
             )
-
 
     def _add_secondary_beams(self):
         """
@@ -258,7 +258,9 @@ class PavementDesign:
                 x1, y1 = group[i]
                 x2, y2 = group[i + 1]
                 if self.dl == 0:  # Horizontal secondary beams
-                    x1up, x1down, x2up, x2down = self._horizontal_beam(x1, x2, y1, y2, half_pillars_dimension)
+                    x1up, x1down, x2up, x2down = self._horizontal_beam(
+                        x1, x2, y1, y2, half_pillars_dimension
+                    )
                     self.msp.add_line(
                         (x1down, y1 - half_bv),
                         (x2down, y2 - half_bv),
@@ -271,7 +273,7 @@ class PavementDesign:
                     )
                 else:  # Vertical secondary beams
                     y1left, y1right, y2left, y2right = self._vertical_beam(
-                        x1, x2, y1, y2,half_pillars_dimension
+                        x1, x2, y1, y2, half_pillars_dimension
                     )
 
                     self.msp.add_line(
@@ -396,7 +398,7 @@ class PavementDesign:
 
     def _label_beams(self):
         """
-        Adds labels to the beams in the drawing, ensuring that primary and secondary beams 
+        Adds labels to the beams in the drawing, ensuring that primary and secondary beams
         are labeled in the correct order based on the directionality of the slab.
 
         The labeling order is determined by the direction of the slab (`self.dl`):
@@ -415,7 +417,6 @@ class PavementDesign:
             self._label_primary_beams()
         """
         self._label_primary_beams()
-
 
     def _label_primary_beams(self):
         """Adds labels to the beams with numbering and orientation."""
@@ -543,7 +544,7 @@ class PavementDesign:
         """
         self._place_pillars()
         self._add_primary_beams()
-        #self._add_secondary_beams()
+        # self._add_secondary_beams()
         self.add_slab_closures()
         self._add_dimension_lines()  # Adiciona cotagem externa
         self._add_pillar_labels()  # Adiciona rótulos aos pilares

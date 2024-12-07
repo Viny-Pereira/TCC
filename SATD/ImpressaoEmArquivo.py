@@ -15,7 +15,7 @@ class FileManager:
 
     def save_txt_file(self, content):
         try:
-            file_path=f"{self.file_path}.txt"
+            file_path = f"{self.file_path}.txt"
             # Salvar o conteúdo no arquivo escolhido
             with open(file_path, "w", encoding="utf-8") as file:
                 if isinstance(content, list):
@@ -36,7 +36,9 @@ class FileManager:
                 with open(file_path, "r", encoding="utf-8") as file:
                     existing_content = json.load(file)
             except (FileNotFoundError, json.JSONDecodeError):
-                existing_content = []  # Se o arquivo não existir ou estiver vazio, inicia uma lista vazia
+                existing_content = (
+                    []
+                )  # Se o arquivo não existir ou estiver vazio, inicia uma lista vazia
 
             # Adiciona o novo conteúdo à lista existente
             existing_content.extend(content)
@@ -65,8 +67,10 @@ class FileManager:
             return int(data)  # Converte para int nativo do Python
         elif isinstance(data, np.float32) or isinstance(data, np.float64):
             return float(data)  # Converte para float nativo do Python
+        elif isinstance(data, np.generic):
+            return data.item()  # Converte tipos NumPy para tipos nativos
         else:
             return data
-        
+
     def get_file_path(self):
         return self.file_path

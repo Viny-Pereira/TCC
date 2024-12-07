@@ -2205,7 +2205,7 @@ class StructuralEvaluation:
         """
         self.calcular_vtc()
         results = {
-            "individual": individual_n,
+            "Informacao Individuo": str(self.subpop),
             "variables": {
                 "NumGen": self.numgen,
                 "NX": self.NX,

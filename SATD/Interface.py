@@ -6,6 +6,7 @@ from AG import GeneticAlgorithm
 from ImpressaoEmArquivo import FileManager
 import matplotlib.pyplot as plt  # Importa matplotlib para os gráficos
 from DwgGenerator import PavementDesign, TBeamDrawingDWG
+import numpy as np
 
 
 class DesignApp:
@@ -54,9 +55,12 @@ class DesignApp:
         tk.Button(
             root, text="Carregar Configuração", command=self.load_parameters
         ).grid(row=len(labels) + 2, column=0, columnspan=2)
+        tk.Button(root, text="Carregar Individuo", command=self.load_individual).grid(
+            row=len(labels) + 3, column=0, columnspan=2
+        )
 
         tk.Button(root, text="Gerar desenhos", command=self.generate_dwg).grid(
-            row=len(labels) + 3, column=0, columnspan=2
+            row=len(labels) + 4, column=0, columnspan=2
         )
 
     def set_window_icon(self):
@@ -174,8 +178,6 @@ class DesignApp:
             # Exibindo o resumo em uma janela estruturada
             self.run_genetic_algorithm()
             self.write_file()
-            file_path = f"{self.file_manager.file_path}.json"
-            self.display_summary_window(file_path)
 
         except ValueError as e:
             messagebox.showerror(
@@ -186,7 +188,7 @@ class DesignApp:
     def get_parameters(self):
         return self.parameters_dict
 
-    def display_summary_window(self, json_file="individuos.json"):
+    def display_best_individual(self, json_file="individuos.json"):
         """
         Carrega os dados do primeiro indivíduo de um arquivo JSON e exibe em uma interface gráfica.
 
@@ -195,7 +197,7 @@ class DesignApp:
         # Abrir e carregar o arquivo JSON
         with open(json_file, "r") as file:
             data = json.load(file)
-        
+
         # Obter o primeiro indivíduo do JSON
         if data:
             first_individual = data[0]  # O primeiro indivíduo da lista
@@ -204,7 +206,7 @@ class DesignApp:
             return
 
         # Criar um dicionário com as informações do primeiro indivíduo
-        parameters_dict = {
+        self.parameters_dict = {
             "Individual": first_individual.get("individual"),
             **{f"{k}": v for k, v in first_individual.get("variables", {}).items()},
             **{f"{k}": v for k, v in first_individual.get("costs", {}).items()},
@@ -223,7 +225,7 @@ class DesignApp:
         tree.pack(fill=tk.BOTH, expand=True)
 
         # Inserir os dados do dicionário na interface
-        for key, value in parameters_dict.items():
+        for key, value in self.parameters_dict.items():
             tree.insert("", tk.END, values=(key, value))
 
     def save_parameters(self):
@@ -254,13 +256,33 @@ class DesignApp:
                 "Erro", f"Não foi possível carregar a configuração: {e}"
             )
 
+    def load_individual(self):
+        """
+        Abre um diálogo para o usuário selecionar um arquivo JSON contendo os indivíduos.
+        Salva o caminho do arquivo para uso posterior.
+        """
+        try:
+            # Abrir diálogo para selecionar o arquivo
+            file_path = filedialog.askopenfilename(
+                filetypes=[("JSON Files", "*.json")], title="Selecione o arquivo JSON"
+            )
+            if not file_path:
+                messagebox.showinfo("Cancelado", "Operação cancelada pelo usuário.")
+                return
+            self.display_best_individual(file_path)
+
+        except (json.JSONDecodeError, ValueError) as e:
+            messagebox.showerror("Erro", f"Erro ao carregar o arquivo JSON: {e}")
+        except Exception as e:
+            messagebox.showerror("Erro", f"Ocorreu um erro inesperado: {e}")
+
     def run_genetic_algorithm(self):
         """
         Executes the genetic algorithm for optimization and displays the results.
 
-        This function creates an instance of the `GeneticAlgorithm` class using the 
-        current design parameters (`self.params`), runs the optimization process, 
-        and retrieves the best solution and its fitness value. The results are displayed 
+        This function creates an instance of the `GeneticAlgorithm` class using the
+        current design parameters (`self.params`), runs the optimization process,
+        and retrieves the best solution and its fitness value. The results are displayed
         in a message box for the user.
 
         Steps:
@@ -270,15 +292,15 @@ class DesignApp:
             4. Store the final population for further analysis or visualization.
             5. Display the best individual's details in a message box.
 
-        If an error occurs during the execution, an error message is displayed in a 
+        If an error occurs during the execution, an error message is displayed in a
         message box for the user.
 
         Exceptions:
-            - Catches any exception raised during the execution of the genetic algorithm 
+            - Catches any exception raised during the execution of the genetic algorithm
             and displays an error message with the exception details.
 
         User Feedback:
-            - Shows an information message with the best solution and its fitness value 
+            - Shows an information message with the best solution and its fitness value
             if the algorithm runs successfully.
             - Displays an error message if the algorithm encounters any issues.
 
@@ -332,7 +354,6 @@ class DesignApp:
                 json_info = self.ga.evaluation.get_results_as_dict(count)
                 json_info_list.append(json_info)
 
-
             # Chama o FileManager para salvar o arquivo
             self.file_manager.save_txt_file(result_content)
             self.file_manager.save_json_file(json_info_list)
@@ -348,7 +369,11 @@ class DesignApp:
         """
         try:
             # Initialize the best individual for evaluation
-            self.ga.evaluation.initialize_individual(self.best_individual)
+            best_individual = self.parameters_dict["Individual"]
+            best_individual = np.array(
+                [int(x) for x in best_individual.strip("[]").split()]
+            )
+            self.ga.evaluation.initialize_individual(best_individual)
 
             # Get parameters for floor plan and T-beam drawings
             (
