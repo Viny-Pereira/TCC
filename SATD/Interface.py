@@ -207,7 +207,7 @@ class DesignApp:
 
         # Criar um dicionário com as informações do primeiro indivíduo
         self.parameters_dict = {
-            "Individual": first_individual.get("individual"),
+            "Informacao Individuo": first_individual.get("Informacao Individuo"),
             **{f"{k}": v for k, v in first_individual.get("variables", {}).items()},
             **{f"{k}": v for k, v in first_individual.get("costs", {}).items()},
             **{f"{k}": v for k, v in first_individual.get("slab_data", {}).items()},
@@ -369,7 +369,7 @@ class DesignApp:
         """
         try:
             # Initialize the best individual for evaluation
-            best_individual = self.parameters_dict["Individual"]
+            best_individual = self.parameters_dict["Informacao Individuo"]
             best_individual = np.array(
                 [int(x) for x in best_individual.strip("[]").split()]
             )
