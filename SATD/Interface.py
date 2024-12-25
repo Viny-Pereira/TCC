@@ -9,59 +9,39 @@ from DwgGenerator import PavementDesign, TBeamDrawingDWG
 import numpy as np
 
 
+class Tooltip:
+    """Create a tooltip for a given widget."""
+    def __init__(self, widget, text):
+        self.widget = widget
+        self.text = text
+        self.tooltip_window = None
+        self.widget.bind("<Enter>", self.show_tooltip)
+        self.widget.bind("<Leave>", self.hide_tooltip)
+
+    def show_tooltip(self, event=None):
+        if self.tooltip_window is not None:
+            return
+        x = self.widget.winfo_rootx() + 20
+        y = self.widget.winfo_rooty() + 20
+        self.tooltip_window = tk.Toplevel(self.widget)
+        self.tooltip_window.wm_overrideredirect(True)
+        self.tooltip_window.wm_geometry(f"+{x}+{y}")
+        label = tk.Label(self.tooltip_window, text=self.text, background="lightyellow", borderwidth=1, relief="solid")
+        label.pack()
+
+    def hide_tooltip(self, event=None):
+        if self.tooltip_window:
+            self.tooltip_window.destroy()
+            self.tooltip_window = None
+
+
 class DesignApp:
     def __init__(self, root):
         self.root = root
         self.root.title("SATD")
-        # Define o ícone da janela
         self.set_window_icon()
-
-        # Campos de entrada e rótulos
-        self.entries = {}
-        labels = [
-            "Número de pavimentos",
-            "Distância mínima entre pilares X (m)",
-            "Distância mínima entre pilares Y (m)",
-            "Dimensão pavimento X (m)",
-            "Dimensão pavimento Y (m)",
-            "Altura máxima da viga (m)",
-            "Largura máxima da viga (m)",
-            "Sobre-carga (Tf/m²)",
-            "Carga permanente - Pavimento (Tf/m²)",
-            "Carga permanente - Paredes (Tf/m²)",
-            "Número de indivíduos",
-            "Número de indivíduos para elitismo",
-            "Número de gerações",
-            "Taxa de cruzamento (%)",
-            "Taxa de mutação (%)",
-        ]
-
-        # Criação de entradas para cada rótulo
-        for idx, label in enumerate(labels):
-            tk.Label(root, text=label).grid(row=idx, column=0, sticky="e")
-            entry = tk.Entry(root)
-            entry.grid(row=idx, column=1)
-            self.entries[label] = entry
-
-        # Botões para interações
-        tk.Button(
-            root,
-            text="Calcular e Salvar resultados",
-            command=self.calculate_and_show_summary,
-        ).grid(row=len(labels), column=0, columnspan=2)
-        tk.Button(root, text="Salvar Configuração", command=self.save_parameters).grid(
-            row=len(labels) + 1, column=0, columnspan=2
-        )
-        tk.Button(
-            root, text="Carregar Configuração", command=self.load_parameters
-        ).grid(row=len(labels) + 2, column=0, columnspan=2)
-        tk.Button(root, text="Carregar Individuo", command=self.load_individual).grid(
-            row=len(labels) + 3, column=0, columnspan=2
-        )
-
-        tk.Button(root, text="Gerar desenhos", command=self.generate_dwg).grid(
-            row=len(labels) + 4, column=0, columnspan=2
-        )
+        self.create_widgets()
+        self.create_status_bar()
 
     def set_window_icon(self):
         """
@@ -75,6 +55,65 @@ class DesignApp:
             self.root.iconphoto(True, self.icon)  # Define o ícone da janela
         except Exception as e:
             messagebox.showerror("Erro", f"Erro ao carregar o ícone: {e}")
+
+    def create_widgets(self):
+        # Create a main frame
+        main_frame = ttk.Frame(self.root, padding="10")
+        main_frame.grid(row=0, column=0, sticky="nsew")
+
+        # Configure grid weights
+        self.root.columnconfigure(0, weight=1)
+        self.root.rowconfigure(0, weight=1)
+
+                # Campos de entrada e rótulos
+        # Labels and entries
+        self.entries = {}
+        labels = [
+            ("Número de pavimentos", "Número total de pavimentos no edifício."),
+            ("Distância mínima entre pilares X (m)", "Distância mínima entre pilares na direção X."),
+            ("Distância mínima entre pilares Y (m)", "Distância mínima entre pilares na direção Y."),
+            ("Dimensão pavimento X (m)", "Dimensão do pavimento na direção X."),
+            ("Dimensão pavimento Y (m)", "Dimensão do pavimento na direção Y."),
+            ("Altura máxima da viga (m)", "Altura máxima permitida para as vigas."),
+            ("Largura máxima da viga (m)", "Largura máxima permitida para as vigas."),
+            ("Sobre-carga (Tf/m²)", "Carga adicional aplicada por m²."),
+            ("Carga permanente - Pavimento (Tf/m²)", "Carga permanente do pavimento por m²."),
+            ("Carga permanente - Paredes (Tf/m²)", "Carga permanente das paredes por m²."),
+            ("Número de indivíduos", "Número de indivíduos na população do algoritmo genético, sugere-se 700."),
+            ("Número de indivíduos para elitismo", "Número de indivíduos que serão mantidos na próxima geração, sugere-se 3-5."),
+            ("Número de gerações", "Número total de gerações a serem executadas, sugere-se 3000."),
+            ("Taxa de cruzamento (%)", "Porcentagem de cruzamento entre indivíduos, sugere-se 80%."),
+            ("Taxa de mutação (%)", "Porcentagem de mutação aplicada aos indivíduos, sugere-se 1%."),
+        ]
+
+        for idx, (label, tooltip_text) in enumerate(labels):
+            ttk.Label(main_frame, text=label).grid(row=idx, column=0, sticky="e", pady=5)
+            entry = ttk.Entry(main_frame)
+            entry.grid(row=idx,sticky="ew", column=1, pady=5)
+            self.entries[label] = entry
+            # Add a question mark icon for tooltip
+            tooltip_icon = ttk.Label(main_frame, text="?", foreground="blue", cursor ="hand2")
+            tooltip_icon.grid(row=idx, column=2, padx=5)
+            Tooltip(tooltip_icon, tooltip_text)  # Create a tooltip for the icon
+
+        # Buttons
+        button_frame = ttk.Frame(main_frame)
+        button_frame.grid(row=len(labels), column=0, columnspan=2, pady=10)
+
+        ttk.Button(button_frame, text="Calcular e Salvar resultados", command=self.calculate_and_show_summary).grid(row=0, column=0, padx=5)
+        ttk.Button(button_frame, text="Salvar Configuração", command=self.save_parameters).grid(row=0, column=1, padx=5)
+        ttk.Button(button_frame, text="Carregar Configuração", command=self.load_parameters).grid(row=0, column=2, padx=5)
+        ttk.Button(button_frame, text="Carregar Individuo", command=self.load_individual).grid(row=0, column=3, padx=5)
+        ttk.Button(button_frame, text="Gerar desenhos", command=self.generate_dwg).grid(row=0, column=4, padx=5)
+
+    def create_status_bar(self):
+        self.status_var = tk.StringVar()
+        status_bar = ttk.Label(self.root, textvariable=self.status_var, relief=tk.SUNKEN, anchor='w')
+        status_bar.grid(row=1, column=0, sticky="ew")
+        self.status_var.set("Pronto")
+
+    def update_status(self, message):
+        self.status_var.set(message)
 
     def validate_input(
         self,
@@ -395,8 +434,8 @@ class DesignApp:
             HV = int(HV * 100)
             HL = int(HL * 100)
             LP = int(LP * 100)
-            span_x = span_x * 100
-            span_y = span_y * 100
+            span_x = round(span_x * 100, 2)
+            span_y = round(span_y * 100, 2)
 
             # Ask user where to save the floor plan DWG
             floor_plan_path = filedialog.asksaveasfilename(
