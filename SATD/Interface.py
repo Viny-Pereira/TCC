@@ -367,7 +367,6 @@ class DesignApp:
             messagebox.showerror("Erro", f"Erro ao rodar o algoritmo genético: {e}")
 
     def write_file(self):
-        self.file_manager = FileManager()
         """
         Gerencia o processo de salvar os resultados em um arquivo.
         Chama o FileManager para escolher e salvar o arquivo.
@@ -394,6 +393,8 @@ class DesignApp:
                 json_info_list.append(json_info)
 
             # Chama o FileManager para salvar o arquivo
+            self.file_manager = FileManager()
+
             self.file_manager.save_txt_file(result_content)
             self.file_manager.save_json_file(json_info_list)
 

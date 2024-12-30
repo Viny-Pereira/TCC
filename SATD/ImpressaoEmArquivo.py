@@ -6,16 +6,27 @@ import numpy as np
 
 class FileManager:
     def __init__(self):
-        # Abre o diálogo para salvar o arquivo
-        self.file_path = asksaveasfilename(
-            title="Salvar Arquivo",
-        )
+        self.file_path = asksaveasfilename(title="Salvar Arquivo")
+        
+        # Verifique se o usuário cancelou o salvamento
         if not self.file_path:
-            return  # O usuário cancelou a operação
+            # Se cancelar, exibe uma mensagem perguntando se tem certeza
+            cancel_confirmation = messagebox.askyesno(
+                "Confirmação",
+                "Você tem certeza que deseja cancelar o salvamento? O arquivo não será salvo.",
+            )
+            if cancel_confirmation:  # Se clicar em 'Sim'
+                messagebox.showinfo("Cancelado", "Operação cancelada. Nenhum arquivo foi salvo.")
+                return  # Sai da função e não faz mais nada
+    def is_valid_path(self):
+        return bool(self.file_path)  # Verifica se o file_path não é vazio    
 
     def save_txt_file(self, content):
+        if not self.is_valid_path():  # Se o caminho do arquivo estiver vazio, não faz nada
+            messagebox.showinfo("Cancelado", "O salvamento foi cancelado.")
+            return
         try:
-            file_path = f"{self.file_path}.txt"
+            file_path = self.file_path if self.file_path.endswith(".txt") else f"{self.file_path}.txt"
             # Salvar o conteúdo no arquivo escolhido
             with open(file_path, "w", encoding="utf-8") as file:
                 if isinstance(content, list):
@@ -29,8 +40,11 @@ class FileManager:
             messagebox.showerror("Erro", f"Erro ao salvar o arquivo: {e}")
 
     def save_json_file(self, content):
+        if not self.is_valid_path():  # Se o caminho do arquivo estiver vazio, não faz nada
+            messagebox.showinfo("Cancelado", "O salvamento foi cancelado.")
+            return
         try:
-            file_path = f"{self.file_path}.json"
+            file_path = self.file_path if self.file_path.endswith(".json") else f"{self.file_path}.json"
             # Abre o arquivo JSON e carrega os dados existentes, se houver
             try:
                 with open(file_path, "r", encoding="utf-8") as file:
