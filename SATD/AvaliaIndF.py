@@ -2192,6 +2192,23 @@ class StructuralEvaluation:
         resultados.append(f"QDL= {self.QDL}")
 
         return "\n".join(resultados)
+    
+    def convert_format(self, input_string):
+        """
+        Converte a string no formato '[1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0]' 
+        para o formato '[0 0 0 0 0 1 0 0 1 0 1 1 1 0 1 1 0 0 0 1 0 1 0 1 1 0 1 1 0 1 0 1]'.
+
+        :param input_string: String no formato com vírgulas.
+        :return: String no formato desejado sem vírgulas, se necessário.
+        """
+        # Verificar se a string contém vírgulas, se sim, faz a conversão
+        if "," in input_string:
+            cleaned_string = input_string.strip("[]")  # Remove os colchetes
+            cleaned_string = cleaned_string.replace(",", "")  # Remove as vírgulas
+            return f"[{cleaned_string}]"
+        else:
+            # Se a string já estiver no formato desejado, apenas retorna a string
+            return input_string
 
     def get_results_as_dict(self, individual_n):
         """
@@ -2205,7 +2222,7 @@ class StructuralEvaluation:
         """
         self.calcular_vtc()
         results = {
-            "Informacao Individuo": str(self.subpop),
+            "Informacao Individuo": self.convert_format(str(self.subpop)),
             "variables": {
                 "NumGen": self.numgen,
                 "NX": self.NX,
@@ -2223,30 +2240,30 @@ class StructuralEvaluation:
                 "NPT": self.NPT[self.ANPT],
             },
             "costs": {
-                "Custo Concreto (RS)": self.CUSTOCONC,
-                "Volume Concreto (RS)": self.vtc,
-                "Custo Protensao (RS)": self.CUSTOPROT,
-                "Custo Aco Passivo (RS)": self.CUSTOAD,
-                "Custo Transporte (RS)": self.CTT,
-                "Custo Montagem (RS)": self.CTMT,
-                "Custo Desp Operacional (RS)": self.CDOP,
-                "Custo Fabricacao(%)": (self.CUSTOFAB / self.CUSTOEST) * 100,
-                "Custo Transporte(%)": (self.CTT / self.CUSTOEST) * 100,
-                "Custo Montagem(%)": (self.CTMT / self.CUSTOEST) * 100,
-                "Custo Total (RS)": self.CUSTOTAL,
-                "Pentotal": self.PENTOTAL,
-                "Apt": self.F,
-                "Custo Estrutura/m2": (self.CUSTOEST * 1.33)
-                / (self.LX * self.LY * self.numpav),
+                "Custo Concreto (RS)": round(self.CUSTOCONC,2),
+                "Volume Concreto (RS)": round(self.vtc,2),
+                "Custo Protensao (RS)": round(self.CUSTOPROT,2),
+                "Custo Aco Passivo (RS)": round(self.CUSTOAD,2),
+                "Custo Transporte (RS)": round(self.CTT,2),
+                "Custo Montagem (RS)": round(self.CTMT,2),
+                "Custo Desp Operacional (RS)": round(self.CDOP,2),
+                "Custo Fabricacao(%)": round((self.CUSTOFAB / self.CUSTOEST) * 100,2),
+                "Custo Transporte(%)": round((self.CTT / self.CUSTOEST) * 100,2),
+                "Custo Montagem(%)": round((self.CTMT / self.CUSTOEST) * 100,2),
+                "Custo Total (RS)": round(self.CUSTOTAL,2),
+                "Pentotal": round(self.PENTOTAL,2),
+                "Apt": round(self.F,2),
+                "Custo Estrutura/m2": round((self.CUSTOEST * 1.33)
+                / (self.LX * self.LY * self.numpav),2),
             },
             "slab_data": {
-                "VL": self.VL+1,
+                "VL": self.VL,
                 "flecha": self.fi,
                 "f-Total": self.ft,
                 "LP": self.LP,
             },
             "beam_data": {
-                "VV": self.VV+1,
+                "VV": self.VV,
                 "cf-Total": self.CFTV,
                 "f-Total": self.FTV,
                 "QDV": self.QDV,

@@ -213,6 +213,9 @@ class GeneticAlgorithm:
         sorted_indices = np.argsort(self.fitness)  # Ascending order
         sorted_population = self.population[sorted_indices]
         return sorted_population
+    
+    def get_population(self):
+        return self.population
 
 
 def main():

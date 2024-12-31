@@ -2,11 +2,12 @@ import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 import json
 from building_design import BuildingDesignParameters
-from AG import GeneticAlgorithm
+from AG_DEAP import GeneticAlgorithm
 from ImpressaoEmArquivo import FileManager
 import matplotlib.pyplot as plt  # Importa matplotlib para os gráficos
 from DwgGenerator import PavementDesign, TBeamDrawingDWG
 import numpy as np
+import ast
 
 
 class Tooltip:
@@ -356,7 +357,7 @@ class DesignApp:
             # Obtendo o melhor indivíduo
             self.best_individual, best_fitness = self.ga.get_best_individual()
 
-            self.population = self.ga.population
+            self.population = self.ga.get_population()
 
             messagebox.showinfo(
                 "Resultado do Algoritmo Genético",
@@ -383,6 +384,7 @@ class DesignApp:
             for individual in sorted_population:
                 count += 1
                 self.ga.evaluation.initialize_individual(individual)
+                
 
                 # Obtém os detalhes para o indivíduo
                 individual_info = self.ga.evaluation.display_results(count)
@@ -410,9 +412,12 @@ class DesignApp:
         try:
             # Initialize the best individual for evaluation
             best_individual = self.parameters_dict["Informacao Individuo"]
-            best_individual = np.array(
-                [int(x) for x in best_individual.strip("[]").split()]
-            )
+            try:
+                ast.literal_eval(best_individual)
+            except:
+                best_individual = np.array(
+                    [int(x) for x in best_individual.strip("[]").split()]
+                )
             self.ga.evaluation.initialize_individual(best_individual)
 
             # Get parameters for floor plan and T-beam drawings
