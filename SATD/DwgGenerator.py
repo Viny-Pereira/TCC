@@ -1,19 +1,20 @@
 import ezdxf
 import numpy as np
+from math import floor
 
 
 class PavementDesign:
     def __init__(
         self,
-        filename="plant.dxf",
-        beam_orientation=0,
-        beam_width=40,
-        beam_height=60,
-        pillar_size=50,
-        span_x=800,
-        span_y=800,
-        num_divisions_x=4,
-        num_divisions_y=3,
+        filename,
+        beam_orientation,
+        beam_width,
+        beam_height,
+        pillar_size,
+        LX,
+        LY,
+        LLJ,
+        LLV,
     ):
         """
         Initializes the DXF document, modelspace, and structural design parameters for the pavement.
@@ -31,10 +32,6 @@ class PavementDesign:
             raise ValueError("Beam width (BV) must be positive.")
         if pillar_size <= 0:
             raise ValueError("Pillar dimension must be positive.")
-        if span_x <= 0 or span_y <= 0:
-            raise ValueError("Span values must be positive.")
-        if num_divisions_x < 1 or num_divisions_y < 1:
-            raise ValueError("Number of divisions must be at least 1.")
 
         self.doc = ezdxf.new()
         self.msp = self.doc.modelspace()
@@ -43,10 +40,50 @@ class PavementDesign:
         self.bv = beam_width
         self.hv = beam_height
         self.pillar_dimension = pillar_size
+        self.LX = LX
+        self.LY = LY
+        self.LLJ = LLJ
+        self.LLV = LLV
+        span_x, span_y, divisions_x, divisions_y = self.determine_axis_parameters()
         self.span_x = span_x
         self.span_y = span_y
-        self.divisions_x = num_divisions_x
-        self.divisions_y = num_divisions_y
+        self.divisions_x = divisions_x
+        self.divisions_y = divisions_y
+
+    @staticmethod
+    def calculate_divisions(total_length, span):
+        """
+        Calculates the number of divisions along an axis based on the total
+        length and the span size.
+
+        :param total_length: Total length of the axis
+        :param span: Span size
+        :return: Integer representing the number of possible divisions
+        """
+        return floor(total_length / span)
+
+    def determine_axis_parameters(self):
+        """
+        Defines the span and number of divisions for both the X and Y axes
+        based on the long direction (dl).
+
+        :return: A tuple containing:
+                - span_x: Span size along the X-axis
+                - span_y: Span size along the Y-axis
+                - divisions_x: Number of divisions along the X-axis
+                - divisions_y: Number of divisions along the Y-axis
+        """
+        # Define spans and axes based on dl
+        if self.dl == 0:
+            span_x, span_y = self.LLJ, self.LLV
+        else:
+            span_x, span_y = self.LLV, self.LLJ
+
+        # Calculate divisions
+        divisions_x = self.calculate_divisions(self.LX*100, span_x)
+        divisions_y = self.calculate_divisions(self.LY*100, span_y)
+
+        return span_x, span_y, divisions_x, divisions_y
 
     def _create_pillar(self, x, y):
         """

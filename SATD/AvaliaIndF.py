@@ -2192,23 +2192,6 @@ class StructuralEvaluation:
         resultados.append(f"QDL= {self.QDL}")
 
         return "\n".join(resultados)
-    
-    def convert_format(self, input_string):
-        """
-        Converte a string no formato '[1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0]' 
-        para o formato '[0 0 0 0 0 1 0 0 1 0 1 1 1 0 1 1 0 0 0 1 0 1 0 1 1 0 1 1 0 1 0 1]'.
-
-        :param input_string: String no formato com vírgulas.
-        :return: String no formato desejado sem vírgulas, se necessário.
-        """
-        # Verificar se a string contém vírgulas, se sim, faz a conversão
-        if "," in input_string:
-            cleaned_string = input_string.strip("[]")  # Remove os colchetes
-            cleaned_string = cleaned_string.replace(",", "")  # Remove as vírgulas
-            return f"[{cleaned_string}]"
-        else:
-            # Se a string já estiver no formato desejado, apenas retorna a string
-            return input_string
 
     def get_results_as_dict(self, individual_n):
         """
@@ -2222,50 +2205,52 @@ class StructuralEvaluation:
         """
         self.calcular_vtc()
         results = {
-            "Informacao Individuo": self.convert_format(str(self.subpop)),
+            "Informacao Individuo": str(self.subpop),
             "variables": {
                 "NumGen": self.numgen,
                 "NX": self.NX,
                 "NY": self.NY,
                 "DL": self.DL,
-                "FCKCML": self.FCKML[self.CML],
-                "FCKCPM": self.FCKPM[self.PM],
+                "FCKCML (MPa)": self.FCKML[self.CML],
+                "FCKCPM (MPa)": self.FCKPM[self.PM],
                 "HL (cm)": int(self.HL[self.VL] * 100),
-                "LLJ (cm)": round(self.LLJ * 100,2),
-                "HV (cm)": int(self.HV[self.VV]*100),
-                "BV (cm)": int(self.BV[self.VV]*100),
-                "LLV (cm)": round(self.LLV*100,2),
+                "LLJ (cm)": round(self.LLJ * 100, 2),
+                "HV (cm)": int(self.HV[self.VV] * 100),
+                "BV (cm)": int(self.BV[self.VV] * 100),
+                "LLV (cm)": round(self.LLV * 100, 2),
                 "NA": self.NA[self.ANA],
                 "NB": self.NB[self.ANB],
                 "NPT": self.NPT[self.ANPT],
+                "LP (cm)": round(self.LP * 100, 2),
+                "LX": self.LX,
+                "LY": self.LY,
             },
             "costs": {
-                "Custo Concreto (RS)": round(self.CUSTOCONC,2),
-                "Volume Concreto (RS)": round(self.vtc,2),
-                "Custo Protensao (RS)": round(self.CUSTOPROT,2),
-                "Custo Aco Passivo (RS)": round(self.CUSTOAD,2),
-                "Custo Transporte (RS)": round(self.CTT,2),
-                "Custo Montagem (RS)": round(self.CTMT,2),
-                "Custo Desp Operacional (RS)": round(self.CDOP,2),
-                "Custo Fabricacao(%)": round((self.CUSTOFAB / self.CUSTOEST) * 100,2),
-                "Custo Transporte(%)": round((self.CTT / self.CUSTOEST) * 100,2),
-                "Custo Montagem(%)": round((self.CTMT / self.CUSTOEST) * 100,2),
-                "Custo Total (RS)": round(self.CUSTOTAL,2),
-                "Pentotal": round(self.PENTOTAL,2),
-                "Apt": round(self.F,2),
-                "Custo Estrutura/m2": round((self.CUSTOEST * 1.33)
-                / (self.LX * self.LY * self.numpav),2),
+                "Custo Concreto (RS)": round(self.CUSTOCONC, 2),
+                "Volume Concreto (RS)": round(self.vtc, 2),
+                "Custo Protensao (RS)": round(self.CUSTOPROT, 2),
+                "Custo Aco Passivo (RS)": round(self.CUSTOAD, 2),
+                "Custo Transporte (RS)": round(self.CTT, 2),
+                "Custo Montagem (RS)": round(self.CTMT, 2),
+                "Custo Desp Operacional (RS)": round(self.CDOP, 2),
+                "Custo Fabricacao(%)": round((self.CUSTOFAB / self.CUSTOEST) * 100, 2),
+                "Custo Transporte(%)": round((self.CTT / self.CUSTOEST) * 100, 2),
+                "Custo Montagem(%)": round((self.CTMT / self.CUSTOEST) * 100, 2),
+                "Custo Total (RS)": round(self.CUSTOTAL, 2),
+                "Pentotal": round(self.PENTOTAL, 2),
+                "Apt": round(self.F, 2),
+                "Custo Estrutura/m2": round(
+                    (self.CUSTOEST * 1.33) / (self.LX * self.LY * self.numpav), 2
+                ),
             },
             "slab_data": {
                 "VL": self.VL,
-                "flecha": self.fi,
-                "f-Total": self.ft,
-                "LP": self.LP,
+                "flecha de laja Total (cm) ": round(self.ft * 100, 2),
             },
             "beam_data": {
                 "VV": self.VV,
-                "cf-Total": self.CFTV,
-                "f-Total": self.FTV,
+                "Contra flecha - Total (cm)": round(self.CFTV * 100, 2),
+                "Flecha Total (cm)": round(self.FTV * 100, 2),
                 "QDV": self.QDV,
                 "QDP": self.QDP,
                 "QDL": self.QDL,
@@ -2282,73 +2267,6 @@ class StructuralEvaluation:
         for i in range(20):
             if self.GV[i] != 0:
                 print(f"GV{i}= {self.GV[i]}")
-
-    def define_drawing_parameters(self):
-        """
-        Defines the span and number of divisions for both the X and Y axes
-        based on the long direction (dl).
-
-        :return: A tuple containing:
-                 - span_x: Span size along the X-axis
-                 - span_y: Span size along the Y-axis
-                 - divisions_x: Number of divisions along the X-axis
-                 - divisions_y: Number of divisions along the Y-axis
-        """
-        if self.DL == 0:
-            span_x = self.LLJ
-            divisions_x = self.calculate_divisions(self.LX, span_x)
-            span_y = self.LLV
-            divisions_y = self.calculate_divisions(self.LY, span_y)
-        else:
-            span_y = self.LLJ
-            divisions_y = self.calculate_divisions(self.LY, span_y)
-            span_x = self.LLV
-            divisions_x = self.calculate_divisions(self.LX, span_x)
-
-        return span_x, span_y, divisions_x, divisions_y
-
-    @staticmethod
-    def calculate_divisions(total_length, span):
-        """
-        Calculates the number of divisions along an axis based on the total
-        length and the span size.
-
-        :param total_length: Total length of the axis
-        :param span: Span size
-        :return: Integer representing the number of possible divisions
-        """
-        return floor(total_length / span)
-
-    def get_location_drawing_data(self):
-        """
-        Returns the essential data for generating the layout sketch of the pillar location,
-        including the LP parameter (pillar width), the direction of the primary axis (DL),
-        the base of the beam (BV), and the division parameters for the grid.
-
-        :return: A tuple containing:
-                - DL: Direction of the primary axis
-                - BV: Base of the beam
-                - LP: Width of the pillar
-                - span_x: Spacing between pillars along the X-axis
-                - span_y: Spacing between pillars along the Y-axis
-                - divisions_x: Number of pillar spans along the X-axis
-                - divisions_y: Number of pillar spans along the Y-axis
-        """
-        span_x, span_y, divisions_x, divisions_y = self.define_drawing_parameters()
-        return (
-            self.DL,
-            self.NA[self.ANA],
-            self.NB[self.ANB],
-            self.NPT[self.ANPT],
-            self.BV[self.VV],
-            self.HV[self.VV],
-            self.HL[self.VL],
-            self.LP,
-            span_x,
-            span_y,
-            divisions_x,
-            divisions_y,
-        )
 
 
 def main():

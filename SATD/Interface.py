@@ -240,18 +240,18 @@ class DesignApp:
 
         # Obter o primeiro indivíduo do JSON
         if data:
-            first_individual = data[0]  # O primeiro indivíduo da lista
+            self.first_individual = data[0]  # O primeiro indivíduo da lista
         else:
             tk.messagebox.showerror("Erro", "O arquivo JSON está vazio!")
             return
 
         # Criar um dicionário com as informações do primeiro indivíduo
         self.parameters_dict = {
-            "Informacao Individuo": first_individual.get("Informacao Individuo"),
-            **{f"{k}": v for k, v in first_individual.get("variables", {}).items()},
-            **{f"{k}": v for k, v in first_individual.get("costs", {}).items()},
-            **{f"{k}": v for k, v in first_individual.get("slab_data", {}).items()},
-            **{f"{k}": v for k, v in first_individual.get("beam_data", {}).items()},
+            "Informacao Individuo": self.first_individual.get("Informacao Individuo"),
+            **{f"{k}": v for k, v in self.first_individual.get("variables", {}).items()},
+            **{f"{k}": v for k, v in self.first_individual.get("costs", {}).items()},
+            **{f"{k}": v for k, v in self.first_individual.get("slab_data", {}).items()},
+            **{f"{k}": v for k, v in self.first_individual.get("beam_data", {}).items()},
         }
 
         # Criar uma nova janela para exibir o resumo
@@ -411,37 +411,19 @@ class DesignApp:
         """
         try:
             # Initialize the best individual for evaluation
-            best_individual = self.parameters_dict["Informacao Individuo"]
-            try:
-                ast.literal_eval(best_individual)
-            except:
-                best_individual = np.array(
-                    [int(x) for x in best_individual.strip("[]").split()]
-                )
-            self.ga.evaluation.initialize_individual(best_individual)
-
-            # Get parameters for floor plan and T-beam drawings
-            (
-                DL,
-                NA,
-                NB,
-                NPT,
-                BV,
-                HV,
-                HL,
-                LP,
-                span_x,
-                span_y,
-                divisions_x,
-                divisions_y,
-            ) = self.ga.evaluation.get_location_drawing_data()
-            # Ajuste de unidades
-            BV = int(BV * 100)
-            HV = int(HV * 100)
-            HL = int(HL * 100)
-            LP = int(LP * 100)
-            span_x = round(span_x * 100, 2)
-            span_y = round(span_y * 100, 2)
+            best_individual = self.first_individual["Informacao Individuo"]
+            DL = self.first_individual["variables"].get("DL")
+            NA = self.first_individual["variables"].get("NA")
+            NB = self.first_individual["variables"].get("NB")
+            NPT = self.first_individual["variables"].get("NPT")
+            BV = self.first_individual["variables"].get("BV (cm)")
+            HV = self.first_individual["variables"].get("HV (cm)")
+            HL = self.first_individual["variables"].get("HL (cm)")
+            LLJ = self.first_individual["variables"].get("LLJ (cm)")
+            LLV = self.first_individual["variables"].get("LLV (cm)")
+            LX = self.first_individual["variables"].get("LX")
+            LY = self.first_individual["variables"].get("LY")
+            LP = self.first_individual["variables"].get("LP (cm)")
 
             # Ask user where to save the floor plan DWG
             floor_plan_path = filedialog.asksaveasfilename(
@@ -461,10 +443,10 @@ class DesignApp:
                 beam_width=BV,
                 beam_height=HV,
                 pillar_size=LP,
-                span_x=span_x,
-                span_y=span_y,
-                num_divisions_x=divisions_x,
-                num_divisions_y=divisions_y,
+                LX=LX,
+                LY=LY,
+                LLJ=LLJ,
+                LLV=LLV,
             )
             plant.generate_drawing()
 
