@@ -140,7 +140,7 @@ class GeneticAlgorithm:
 
 def main():
     print("Bem-vindo ao sistema de cálculo de parâmetros de design de edifícios!")
-
+    maxgen = 3000
     # Initialize building design parameters
     building_params = BuildingDesignParameters(
         numpav=3,
@@ -155,7 +155,7 @@ def main():
         gpl=0.5,
         numind=700,
         elit=3,
-        maxger=3000,
+        maxger=maxgen,
         cruz_taxa=80,
         pmut=1,
     )

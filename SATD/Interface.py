@@ -6,8 +6,6 @@ from AG_DEAP import GeneticAlgorithm
 from ImpressaoEmArquivo import FileManager
 import matplotlib.pyplot as plt  # Importa matplotlib para os gráficos
 from DwgGenerator import PavementDesign, TBeamDrawingDWG
-import numpy as np
-import ast
 
 
 class Tooltip:

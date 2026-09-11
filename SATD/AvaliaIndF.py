@@ -1,5 +1,4 @@
 import numpy as np
-from math import floor
 
 
 class StructuralEvaluation:
@@ -175,11 +174,7 @@ class StructuralEvaluation:
         self.nvv = nvv
         self.numgen = numgen
         # Propriedades da LAJE
-        self.HL = np.zeros(32)  # Altura da Laje (m)
-        self.A = np.zeros(32)  # Área da Laje (m²)
-        self.YG = np.zeros(32)  # Centro de Gravidade da Laje (m)
-        self.II = np.zeros(32)  # Momento de Inércia da Laje (m^4)
-        self.XMAX = np.zeros(32)  # Máximo X (compressão)
+        
 
         self.PA = np.zeros(32)  # Força de Protensão (MN)
         self.APL = np.zeros(32)  # Área de Protensão Total no painel da Laje (m²)
@@ -282,6 +277,12 @@ class StructuralEvaluation:
         Este método facilita o uso de lajes padronizadas em análises estruturais,
         permitindo fácil acesso e manipulação de suas propriedades.
         """
+
+        self.HL = np.zeros(32)  # Altura da Laje (m)
+        self.A = np.zeros(32)  # Área da Laje (m²)
+        self.YG = np.zeros(32)  # Centro de Gravidade da Laje (m)
+        self.II = np.zeros(32)  # Momento de Inércia da Laje (m^4)
+        self.XMAX = np.zeros(32)  # Máximo X (compressão)
         # Atribuições para os diferentes intervalos de i
         self.HL[0:4], self.A[0:4], self.YG[0:4], self.II[0:4], self.XMAX[0:4] = (
             0.09,
@@ -683,8 +684,8 @@ class StructuralEvaluation:
         print(f"VV: {self.VV}")
         print(f"NA[{self.ANA}]: {self.NA[self.ANA]}")
         print(f"NB[{self.ANB}]: {self.NB[self.ANB]}")
-        print(f"ANPT: {2 * self.subpop[10] + 1 * self.subpop[11] + 1}")
-        print(f"ABP: {2 * self.subpop[12] + 1 * self.subpop[13] + 1}")
+        print(f"ANPT: {2 * self.subpop[10] + 1 * self.subpop[11]}")
+        print(f"ABP: {2 * self.subpop[12] + 1 * self.subpop[13]}")
 
     def calculate_spans(self):
         """
@@ -895,6 +896,53 @@ class StructuralEvaluation:
         TCSUP = (self.ML[2] + self.ML[3] + self.ML[4]) / self.WCSUP / 100  # MPa
         return TCINF, TCSUP
 
+
+    def coeficiente_agregado(tipo_rocha: str="gnaisse") -> float:
+        r"""
+        Retorna o coeficiente \( \alpha_E \) com base no tipo de rocha.
+        
+        Parâmetros:
+            tipo_rocha (str): O tipo de rocha. Pode ser:
+                - "basalto" ou "diabásio": 1.2
+                - "granito" ou "gnaisse": 1.0
+                - "calcário": 0.9
+                - "arenito": 0.7
+        
+        Retorna:
+            float: O valor de \( \alpha_E \) correspondente ao tipo de rocha.
+        
+        Lança:
+            ValueError: Se o tipo de rocha informado não for válido.
+        """
+        # Dicionário de coeficientes αE para diferentes tipos de rocha
+        coeficientes = {
+            "basalto": 1.2,
+            "diabásio": 1.2,
+            "granito": 1.0,
+            "gnaisse": 1.0,
+            "calcário": 0.9,
+            "arenito": 0.7
+        }
+        
+        return coeficientes.get(tipo_rocha, 1)
+
+
+    def coeficiente_concreto(self) -> float:
+        """
+        Calcula o coeficiente do concreto com base no valor de FCKPM.
+
+        A fórmula utilizada é:
+            coef = 0.8 + 0.2 * FCKPM / 80
+        O valor do coeficiente é limitado a 1.
+
+        Parâmetros:
+            FCKPM (float): A resistência característica do concreto em MPa.
+
+        Retorna:
+            float: O coeficiente do concreto (máximo de 1).
+        """
+        return min(0.8 + 0.0025 * self.FCKPM[self.PM], 1)
+
     def calculate_prestress_after_transfer(self):
         """
         Calculate prestress after transfer.
@@ -905,6 +953,10 @@ class StructuralEvaluation:
         :param fckpm: Resistência do concreto da laje protendida
         :return: PT (força de protensão após transferência)
         """
+        alpha_i = self.coeficiente_concreto()
+        #alpha_i = 0.85
+        coeficiente_natureza_agregado = self.coeficiente_agregado()
+
         SCP = self.PA[self.VL] / self.A[self.VL]
         +self.PA[self.VL] * (self.EP**2 / self.II[self.VL])  # Mself.Pa
 
@@ -912,7 +964,7 @@ class StructuralEvaluation:
             (self.PA[self.VL] / self.A[self.VL])
             + self.PA[self.VL] * (self.EP / self.WINF)
         )
-        +(195000 / (0.85 * 5600 * (self.FCKPM[self.PM] ** 0.5))) * SCP
+        +(195000 / (alpha_i * coeficiente_natureza_agregado * 5600 * (self.FCKPM[self.PM] ** 0.5))) * SCP
 
         PT = self.PA[self.VL] - self.APL[self.VL] * SPT  # MN
         return PT
@@ -950,19 +1002,21 @@ class StructuralEvaluation:
         :param TSUPT: Tensão superior após protensão
         :return: Tensões atuantes em vazio
         """
+        coeficiente_ponderaçao = 1.3
+        #coeficiente_ponderaçao = 1
         TDESI = self.TINPT + (self.ML[0] / self.WINF) / 100  # Desmoldagem Inferior
         TDESS = self.TSUPT + (self.ML[0] / self.WSUP) / 100  # Desmoldagem Superior
         TTI = (
-            self.TINPT + 0.8 * (self.ML[0] / self.WINF) / 100
+            self.TINPT + coeficiente_ponderaçao*0.8 * (self.ML[0] / self.WINF) / 100
         )  # Transporte Inferior (0.8)
         TTS = (
-            self.TSUPT + 0.8 * (self.ML[0] / self.WSUP) / 100
+            self.TSUPT + coeficiente_ponderaçao*0.8 * (self.ML[0] / self.WSUP) / 100
         )  # Transporte Superior (0.8)
         TTII = (
-            self.TINPT + 1.3 * (self.ML[0] / self.WINF) / 100
+            self.TINPT +coeficiente_ponderaçao* 1.3 * (self.ML[0] / self.WINF) / 100
         )  # Transporte Inferior (1.3)
         TTSS = (
-            self.TSUPT + 1.3 * (self.ML[0] / self.WSUP) / 100
+            self.TSUPT + coeficiente_ponderaçao*1.3 * (self.ML[0] / self.WSUP) / 100
         )  # Transporte Superior (1.3)
         TMI = self.TINPT + self.TINF
         TMS = self.TSUPT + self.TSUP
@@ -1405,15 +1459,20 @@ class StructuralEvaluation:
             - VTINPI (float): Stress at bottom fiber at infinite time
             - VTSUPI (float): Stress at top fiber at infinite time
         """
+        fptk = 1900
+        
+        dpi = fptk*0.74
+        #dpi = 1453
+
         # Calculate the initial prestress force (PAV)
-        pav = -0.97 * (self.NA[self.ANA] + self.NB[self.ANB]) * 0.0001014 * 1453
+        pav = -0.97 * (self.NA[self.ANA] + self.NB[self.ANB]) * 0.0001014 * dpi
 
         # Calculate the sum of prestress forces (SOMA)
         soma = (
             (self.NA[self.ANA] * self.EPA + self.NB[self.ANB] * self.EPB)
             * 0.97
             * 0.0001014
-            * 1453
+            * dpi
             * -1
         )
 
@@ -1422,7 +1481,7 @@ class StructuralEvaluation:
             (self.NA[self.ANA] * (self.EPA**2) + self.NB[self.ANB] * (self.EPB**2))
             * 0.97
             * 0.0001014
-            * 1453
+            * dpi
             * -1
         )
 

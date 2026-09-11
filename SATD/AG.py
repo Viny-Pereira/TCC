@@ -4,7 +4,6 @@ from CruzUniforme import UniformCrossover
 from building_design import BuildingDesignParameters
 import matplotlib.pyplot as plt
 
-
 class GeneticAlgorithm:
     """
     A genetic algorithm to optimize building design parameters based on structural evaluation.
@@ -220,22 +219,22 @@ class GeneticAlgorithm:
 
 def main():
     print("Bem-vindo ao sistema de cálculo de parâmetros de design de edifícios!")
-
-    # Criando a instância de BuildingDesignParameters
+    maxgen = 3000
+    # Initialize building design parameters
     building_params = BuildingDesignParameters(
-        numpav=2,
+        numpav=3,
         dminx=7.0,
         dminy=7.0,
         lx=46.5,
         ly=48.0,
-        hmax=0.50,
-        bmax=0.40,
-        q=0.3,
-        gpr=0.1,
-        gpl=0.2,
+        hmax=0.60,
+        bmax=0.70,
+        q=0.15,
+        gpr=0.15,
+        gpl=0.5,
         numind=700,
         elit=3,
-        maxger=50,
+        maxger=maxgen,
         cruz_taxa=80,
         pmut=1,
     )
@@ -245,7 +244,6 @@ def main():
 
     # Executando o algoritmo genético por um número de gerações
     ga.evolve()
-
     # Obtendo o melhor indivíduo após a execução
     best_individual, best_fitness = ga.get_best_individual()
 
